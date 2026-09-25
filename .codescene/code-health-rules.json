@@ -1,0 +1,15 @@
+{
+  "usage": "Generated API clients repeat framework scaffolding by design. Keep this override scoped to Orval output.",
+  "rule_sets": [
+    {
+      "matching_content_path": "apps/web/src/api/generated/**",
+      "rules": [
+        {
+          "name": "Code Duplication",
+          "weight": 0
+        }
+      ],
+      "thresholds": []
+    }
+  ]
+}
