@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 3 adds meaningful CSV seed data to the CAP domain model: 16 Spacefarers, 5 Departments, and 8 Positions. The protected OData service remains empty until Phase 4 adds projections. Planet restrictions, draft support, and welcome-email delivery are added in subsequent phases. There is no Fiori application yet.
+Phase 4 exposes the seeded domain through the protected OData V4 service. CAP supplies generic active CRUD and draft handling for Spacefarers; Departments and Positions are read-only catalogs. Planet restrictions, assignment validation, and welcome-email delivery are added in subsequent phases. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -24,7 +24,7 @@ npm ci
 npm run watch
 ```
 
-Open the [CAP landing page](http://localhost:4004). The service shell is listed at `/odata/v4/galactic`. Its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes an empty service until the domain projections are added.
+Open the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The endpoints require one of the configured demo users.
 
 `npm start` runs `cds serve` without watching files. `npm run watch` runs `cds watch`, which restarts the server when project files change. CAP detects `tsconfig.json` and loads TypeScript through the locally installed `tsx` runner. Stop either command with Ctrl+C.
 
@@ -33,6 +33,8 @@ SQLite runs in memory for this local demo. CAP creates the three application tab
 The model uses UUID keys. `Spacefarers` also use CAP's managed audit fields. Required persisted values, numeric defaults, numeric ranges, and association targets are declared in CDS. A position must belong to a department, while a spacefarer's department and position are optional. Matching a selected position to its department requires cross-field logic and is implemented in a later service-handler phase.
 
 The demo data contains six Earth and six Mars Spacefarers so each configured user will have more than one five-row page after planet isolation is implemented. Europa, Titan, Kepler-186f, and Proxima Centauri b provide additional filtering examples. The fixtures include unassigned Spacefarers, department-only assignments, and matching department/position assignments. CAP loads these rows during database initialization, outside service `CREATE` events, so the future welcome-email handler will not run for seed data.
+
+`Spacefarers` is draft-enabled. CAP's generic OData handlers support draft creation, editing, activation, and discard, as well as direct active `POST`, `GET`, `PATCH`, and `DELETE` requests. The shared `Departments` and `Positions` catalogs allow reads and reject writes. Phase 4 intentionally contains no custom service handler.
 
 ## TypeScript
 
@@ -69,7 +71,7 @@ The landing page is public; the OData service requires the role above. CAP's bui
 
 These settings apply to development and tests. The production profile selects JWT authentication and requires future identity-provider configuration and dependencies; this repository is not a production deployment setup.
 
-The agreed security design has no administrator role or cross-planet bypass. Planet-level enforcement will be implemented and tested before the backend milestone is complete.
+The agreed security design has no administrator role or cross-planet bypass. At this phase, either configured user can still read every seeded Spacefarer. Planet-level enforcement will be implemented and tested before the backend milestone is complete.
 
 ## MailHog
 
@@ -98,27 +100,28 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, OData metadata, and authentication. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Tests do not need Docker or MailHog.
+The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, OData metadata, and authentication. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Tests do not need Docker or MailHog.
 
 Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
 
 ## Files to Explore
 
-| File or directory           | Purpose                                                                                   |
-| --------------------------- | ----------------------------------------------------------------------------------------- |
-| `package.json`              | Runtime and development dependencies, commands, and CAP configuration profiles.           |
-| `package-lock.json`         | Resolved dependency versions for reproducible installs with `npm ci`.                     |
-| `srv/galactic-service.cds`  | The service contract CAP turns into OData endpoints; currently an empty, protected shell. |
-| `db/schema.cds`             | The persistence model for Spacefarers and the shared catalogs.                            |
-| `db/data/`                  | Deterministic CSV fixtures loaded into the local database at startup.                     |
-| `test/bootstrap.test.ts`    | TypeScript tests using `cds.test` and Vitest.                                             |
-| `test/domain-model.test.ts` | Model compilation and SQLite persistence tests.                                           |
-| `test/seed-data.test.ts`    | Seed loading, relationship consistency, and demo-volume tests.                            |
-| `vitest.config.mts`         | Vitest setup and serial test-file execution for the shared CAP test server.               |
-| `tsconfig.json`             | Strict TypeScript settings, CAP type resolution, and source maps.                         |
-| `.vscode/launch.json`       | Debug configurations for the server and tests.                                            |
-| `.vscode/tasks.json`        | Type-checking and MailHog lifecycle tasks for debugging.                                  |
-| `compose.yaml`              | Local MailHog container.                                                                  |
+| File or directory           | Purpose                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `package.json`              | Runtime and development dependencies, commands, and CAP configuration profiles.    |
+| `package-lock.json`         | Resolved dependency versions for reproducible installs with `npm ci`.              |
+| `srv/galactic-service.cds`  | The protected OData service with draft-enabled Spacefarers and read-only catalogs. |
+| `db/schema.cds`             | The persistence model for Spacefarers and the shared catalogs.                     |
+| `db/data/`                  | Deterministic CSV fixtures loaded into the local database at startup.              |
+| `test/bootstrap.test.ts`    | TypeScript tests using `cds.test` and Vitest.                                      |
+| `test/domain-model.test.ts` | Model compilation and SQLite persistence tests.                                    |
+| `test/seed-data.test.ts`    | Seed loading, relationship consistency, and demo-volume tests.                     |
+| `test/service.test.ts`      | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
+| `vitest.config.mts`         | Vitest setup and serial test-file execution for the shared CAP test server.        |
+| `tsconfig.json`             | Strict TypeScript settings, CAP type resolution, and source maps.                  |
+| `.vscode/launch.json`       | Debug configurations for the server and tests.                                     |
+| `.vscode/tasks.json`        | Type-checking and MailHog lifecycle tasks for debugging.                           |
+| `compose.yaml`              | Local MailHog container.                                                           |
 
 ## Design and Future Work
 

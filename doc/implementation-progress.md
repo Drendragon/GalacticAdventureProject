@@ -125,3 +125,29 @@ Verification:
 - Independent read-only review found no blocking issues and confirmed the fixture counts, UUID validity, relationship consistency, pagination volume, and real CAP loading path.
 
 Deferred minor from review: the assignment-consistency test proves that every selected Position belongs to the selected Department, but does not separately assert that department-only Spacefarer references exist. The current fixture references were independently verified as valid; a future hardening test could protect this case from later CSV edits.
+
+## Phase 4 — CAP Service
+
+Status: implemented; stopped for the user's Phase 4 review. Phase 5 has not started.
+
+Extended the protected `GalacticService` with projections for all three domain entities:
+
+- `Spacefarers` is draft-enabled and uses CAP's generated OData V4 handlers for active CRUD and draft operations.
+- `Departments` and `Positions` are shared read-only catalogs. CAP rejects writes to either projection with HTTP 405.
+- No custom TypeScript service handler was added. Trusted field derivation and assignment validation remain Phase 5 work.
+
+Ruling: retain CAP's standard draft contract and direct active CRUD support rather than manually implementing basic persistence handlers. Draft activation will reach the active `CREATE` or `UPDATE` event used by later business handlers.
+
+Ruling: the service already requires the `SpacefarerUser` role from Phase 1, but Phase 4 does not add row-level planet isolation. Until its planned authorization phase, either configured demo user can see all seeded Spacefarers. The documentation calls out this temporary state so it is not mistaken for the final security behavior.
+
+TDD evidence: the first projection tests returned HTTP 404 for every entity. After adding the projections, catalog write tests returned HTTP 201 until `@readonly` was applied. Draft tests then failed because `IsActiveEntity` was unknown and incomplete drafts hit active-table constraints; adding `@odata.draft.enabled` made the generated draft flow available.
+
+Verification:
+
+- The service suite verifies seeded reads for all projections, write rejection for both catalogs, direct active `POST`/`GET`/`PATCH`/`DELETE`, and draft creation, edit, activation, edit activation, and discard.
+- Draft discard is verified by confirming the last activated active value remains unchanged after deleting a later modified draft.
+- `npm test`: 34 passed across 4 Vitest files after splitting active CRUD and draft lifecycle coverage into focused, independent cases.
+- `npm run typecheck`, `npm run format:check`, and `git diff --check`: passed.
+- `npx cds compile srv/galactic-service.cds --to edmx --service GalacticService`: produced valid OData V4 metadata with all three entity sets, draft fields and actions, and read-only capability annotations.
+- CodeScene: the new service test scores 10.0; the pre-commit safeguard passed with 1 eligible file checked and no issues across 4 modified files.
+- Independent read-only review found no critical or important issues. Its two minor test-hardening suggestions were applied: update/delete rejection is now checked for both catalogs, and draft discard explicitly verifies that the draft no longer exists while the active row remains unchanged. Re-review confirmed both findings resolved with no regression.
