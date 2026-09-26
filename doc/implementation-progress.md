@@ -66,3 +66,32 @@ Editor follow-up: reproduced the missing `rootDir` diagnostic with VS Code's bun
 Test-runner follow-up: switched the five bootstrap checks to Vitest so tests use Jest-style `describe`, `it`, and `expect`. `npm test` runs Vitest once; the VS Code test debugger launches the same runner. Vitest loads `test/setup.ts` before test files and runs files serially because CAP's test server uses shared process state.
 
 Verification: `npm test` passed all 5 checks, `npm run typecheck` and `npm run format:check` passed, and the Vitest command with the Node inspector enabled passed all 5 checks. `git diff --check` found no whitespace errors. CodeScene's pre-commit safeguard passed with 2 eligible files checked and no issues. The VS Code F5 experience still needs an interactive editor check.
+
+## Phase 2 — Domain Model
+
+Status: implemented; stopped for the user's Phase 2 review. Phase 3 has not started.
+
+Added `db/schema.cds` under the `galactic.spacefarers` namespace:
+
+- `Spacefarers` uses UUID keys and managed audit fields. Names, email, origin planet, and both numeric values are required in persisted rows.
+- Omitted stardust defaults to `0`; omitted wormhole navigation skill defaults to `1`. CDS range annotations declare stardust as nonnegative and navigation skill as `0` through `100`.
+- `Departments` and `Positions` use UUID keys. Every position requires a department.
+- Spacefarer department and position assignments remain optional. All managed associations declare target-existence validation.
+
+TDD evidence: the model-shape, defaults, required-field, required-position-department, and association-target tests were each observed failing before their corresponding CDS declarations were added. Association expansion was exercised through a real in-memory SQLite deployment.
+
+Ruling: numeric range annotations are a CAP application-service validation contract rather than SQLite `CHECK` constraints. Phase 2 verifies the compiled CDS annotations; Phase 4 API tests will verify rejection through the OData service after entity projections exist.
+
+Deferred to later planned phases: seed data (Phase 3), service projections and draft enablement (Phase 4), trusted planet derivation and cross-field assignment checks (Phase 5), and authorization (Phase 7).
+
+Verification:
+
+- `npm test`: 17 passed across the bootstrap and domain-model suites.
+- `npm run typecheck`: passed with strict TypeScript checking.
+- `npx cds compile db/schema.cds --to sql`: generated all three SQLite tables with the expected keys, required columns, defaults, and association foreign-key columns.
+- `npm run format:check` and `git diff --check`: passed.
+- CodeScene initially scored the new test file 9.38 for duplicated candidate setup. Extracting one typed test-data builder raised it to the required 10.0 while preserving all tests.
+- CodeScene's pre-commit safeguard passed with 1 eligible file checked and no issues.
+- Independent read-only review found no CDS defect and confirmed CAP removes non-key `not null` constraints from generated draft entities, preserving the later incomplete-draft design. Its Code Health finding was addressed by the fixture refactor.
+
+Deferred minor from review: constraint tests currently assert that SQLite rejects invalid rows without matching the exact SQLite error text. More specific message assertions may reduce false positives, but they also couple these model tests to adapter-specific wording.
