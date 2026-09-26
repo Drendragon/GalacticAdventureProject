@@ -1,0 +1,17 @@
+node_modules/
+gen/
+dist/
+coverage/
+.superpowers/
+*.log
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+!.env.example
+.cdsrc-private.json
+default-env.json
+
+@cds-models

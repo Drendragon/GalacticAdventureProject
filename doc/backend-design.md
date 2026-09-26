@@ -6,6 +6,8 @@ Build the backend for the local SAP interview exercise before creating the Fiori
 
 Use SAP CAP Node.js, CDS, SQLite, and OData V4. CAP supplies generic CRUD and query handling. Include draft support now so the later Fiori List Report and Object Page can use the same backend lifecycle.
 
+Use TypeScript for handwritten application code, tests, and executable tooling, with strict type checking. Keep models in CDS. Provide VS Code debugging, including an optional profile that starts and stops the local MailHog container.
+
 This document records the decisions agreed during the planning discussion. The original assignment remains unchanged. The implementation plan contains the corresponding work sequence.
 
 ## Domain Model

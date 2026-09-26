@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CAP: Debug",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@sap/cds-dk/bin/cds.js",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}",
+      "env": { "NODE_ENV": "development" },
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
+      "preLaunchTask": "typecheck"
+    },
+    {
+      "name": "CAP: Debug + MailHog",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@sap/cds-dk/bin/cds.js",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}",
+      "env": { "NODE_ENV": "development" },
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
+      "preLaunchTask": "debug: prepare with MailHog",
+      "postDebugTask": "mailhog: stop"
+    },
+    {
+      "name": "CAP: Debug tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
+      "preLaunchTask": "typecheck"
+    }
+  ]
+}

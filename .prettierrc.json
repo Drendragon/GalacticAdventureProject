@@ -1,6 +1,3 @@
 {
-  "printWidth": 150,
-  "plugins": ["prettier-plugin-classnames"],
-  "classnamesPrintWidth": 100,
-  "syntaxTransformation": true
+  "printWidth": 150
 }

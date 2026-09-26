@@ -1,13 +1,18 @@
 {
   "name": "galacticadventureproject",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "SAP CAP backend for the Galactic Spacefarer Adventure interview exercise",
+  "private": true,
   "directories": {
     "doc": "doc"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cds serve",
+    "watch": "cds watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -20,5 +25,67 @@
     "url": "https://github.com/Drendragon/GalacticAdventureProject/issues"
   },
   "homepage": "https://github.com/Drendragon/GalacticAdventureProject#readme",
-  "type": "commonjs"
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "cds": {
+    "[development]": {
+      "requires": {
+        "db": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": ":memory:"
+          }
+        },
+        "auth": {
+          "kind": "basic",
+          "users": {
+            "earth-user": {
+              "password": "earth-demo",
+              "roles": [
+                "SpacefarerUser"
+              ],
+              "attr": {
+                "planet": "Earth"
+              }
+            },
+            "mars-user": {
+              "password": "mars-demo",
+              "roles": [
+                "SpacefarerUser"
+              ],
+              "attr": {
+                "planet": "Mars"
+              }
+            },
+            "*": false
+          }
+        }
+      }
+    },
+    "[production]": {
+      "requires": {
+        "auth": "jwt"
+      }
+    }
+  },
+  "dependencies": {
+    "@cap-js/sqlite": "3.1.1",
+    "@sap/cds": "10.1.1"
+  },
+  "devDependencies": {
+    "@cap-js/cds-test": "1.0.2",
+    "@cap-js/cds-typer": "0.41.1",
+    "@cap-js/cds-types": "0.20.0",
+    "@sap/cds-dk": "10.1.0",
+    "@types/node": "24.13.6",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  },
+  "imports": {
+    "#cds-models/*": "./@cds-models/*/index.js"
+  }
 }

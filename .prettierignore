@@ -2,3 +2,7 @@ node_modules
 dist
 coverage
 resources/*.json
+package-lock.json
+gen
+.superpowers
+@cds-models

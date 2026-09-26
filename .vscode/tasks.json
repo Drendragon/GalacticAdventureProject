@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "mailhog: start",
+      "type": "process",
+      "command": "docker",
+      "args": ["compose", "up", "--detach", "--wait", "mailhog"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "mailhog: stop",
+      "type": "process",
+      "command": "docker",
+      "args": ["compose", "stop", "mailhog"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "debug: prepare with MailHog",
+      "dependsOrder": "sequence",
+      "dependsOn": ["typecheck", "mailhog: start"],
+      "problemMatcher": []
+    }
+  ]
+}

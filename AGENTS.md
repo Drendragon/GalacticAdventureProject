@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Implementation Language and Workflow
+
+- Use TypeScript for handwritten application code, tests, and executable tooling. Keep domain/service models in CDS and declarative configuration in JSON/YAML.
+- Work on `master`. Stop after each implementation phase for the user's review.
+- The user handles staging, commits, and pushes.
+
 ## Agent TL;DR
 
 - **Code Health is authoritative.** Treat it as the single source of truth for maintainability.

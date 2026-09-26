@@ -5,6 +5,7 @@
 Build a small full-stack SAP application using:
 
 - SAP CAP with Node.js
+- TypeScript for application code and tests
 - CDS data model
 - SQLite for local development
 - OData V4 service
@@ -76,9 +77,9 @@ galactic-spacefarer/
 │
 ├── srv/
 │   ├── galactic-service.cds
-│   ├── galactic-service.js
+│   ├── galactic-service.ts
 │   └── services/
-│       └── notification-service.js
+│       └── notification-service.ts
 │
 ├── test/
 │   └── backend tests
@@ -95,6 +96,10 @@ Use standard CAP project conventions. Avoid unnecessary abstraction unless it he
 ---
 
 # 4. Phase 1 – Initialize the CAP Node.js Project
+
+Execution notes: use Node.js 24.21.0 and project-local CAP tooling. Add an empty, protected `GalacticService` shell so startup can be verified before domain modeling. Phase 4 will add its entity projections. Track validation in [Implementation Progress](implementation-progress.md).
+
+Use CAP's TypeScript setup, strict type checking, TypeScript tests, and VS Code launch configurations. Include an optional debug configuration that starts and stops MailHog through Compose tasks.
 
 ## Tasks
 
@@ -372,13 +377,13 @@ GET, POST, PATCH, and DELETE work.
 Create:
 
 ```text
-srv/galactic-service.js
+srv/galactic-service.ts
 ```
 
 Extend:
 
 ```js
-cds.ApplicationService
+cds.ApplicationService;
 ```
 
 Register lifecycle handlers using:
@@ -450,13 +455,13 @@ Do not integrate a production email provider unless it is simple and does not ad
 Create an abstraction such as:
 
 ```text
-srv/services/notification-service.js
+srv/services/notification-service.ts
 ```
 
 Suggested API:
 
 ```js
-sendWelcomeEmail(spacefarer)
+sendWelcomeEmail(spacefarer);
 ```
 
 For local development, send actual SMTP messages to MailHog through a configurable transport. MailHog captures them for inspection rather than delivering them to external recipients. Use the created spacefarer's email as the recipient.
@@ -491,7 +496,7 @@ this.after('CREATE', Spacefarers, ...)
 From that handler, register a request-success callback that runs after commit and calls:
 
 ```js
-notificationService.sendWelcomeEmail(spacefarer)
+notificationService.sendWelcomeEmail(spacefarer);
 ```
 
 Keep external notification logic outside the handler itself.
@@ -1188,7 +1193,7 @@ The goal is to demonstrate correct SAP CAP and Fiori usage, not architectural co
 
 # 25. Coding Guidelines
 
-Use modern JavaScript compatible with the selected CAP Node.js version.
+Use TypeScript with strict type checking, compatible with the selected CAP Node.js version. Handwritten executable code and tests use `.ts` files.
 
 Prefer:
 
