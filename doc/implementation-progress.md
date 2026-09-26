@@ -95,3 +95,33 @@ Verification:
 - Independent read-only review found no CDS defect and confirmed CAP removes non-key `not null` constraints from generated draft entities, preserving the later incomplete-draft design. Its Code Health finding was addressed by the fixture refactor.
 
 Deferred minor from review: constraint tests currently assert that SQLite rejects invalid rows without matching the exact SQLite error text. More specific message assertions may reduce false positives, but they also couple these model tests to adapter-specific wording.
+
+## Phase 3 — Seed Data
+
+Status: implemented; stopped for the user's Phase 3 review. Phase 4 has not started.
+
+Added deterministic CSV fixtures under `db/data`:
+
+- 5 shared Departments and 8 Positions with stable UUIDs and valid department relationships.
+- 16 Spacefarers: 6 Earth, 6 Mars, and one each from Europa, Titan, Kepler-186f, and Proxima Centauri b.
+- Optional-assignment examples include no assignment, department only, and a position with its matching department.
+- Numeric examples include explicit zero values and varied valid stardust/navigation values for later sorting and filtering demos.
+
+Ruling: seed six Earth and six Mars rows so `$top=5&$skip=5` has a second visible page for either configured demo user. Four other planets provide filter variety while keeping the total within the plan's 10–20 range.
+
+Ruling: use stable human-readable UUID patterns for deterministic associations and repeatable API examples. These are public demo fixtures rather than generated production identifiers.
+
+CAP loads CSV fixtures during database deployment rather than through the application service. Consequently, seed loading does not invoke the later active `CREATE` notification handler.
+
+TDD evidence: the catalog test first observed empty Department and Position tables, then passed after their CSV fixtures were added. The Spacefarer test first observed zero rows, then passed after the 16-row fixture was added. Both exercise CAP's real CSV loader and in-memory SQLite database.
+
+Verification:
+
+- `npm test`: 19 passed across 3 Vitest files.
+- `npm run typecheck`: passed with strict TypeScript checking.
+- `npm run format:check` and `git diff --check`: passed.
+- CodeScene: the new seed-data test scores 10.0.
+- CodeScene's pre-commit safeguard passed with 1 eligible file checked and no issues.
+- Independent read-only review found no blocking issues and confirmed the fixture counts, UUID validity, relationship consistency, pagination volume, and real CAP loading path.
+
+Deferred minor from review: the assignment-consistency test proves that every selected Position belongs to the selected Department, but does not separately assert that department-only Spacefarer references exist. The current fixture references were independently verified as valid; a future hardening test could protect this case from later CSV edits.
