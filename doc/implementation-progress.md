@@ -366,3 +366,27 @@ Verification:
 - `npm test`: 131 tests passed across 10 files, including 7 focused List Report annotation cases.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
 - CodeScene scores the new test at 10.0; the pre-commit safeguard passed with no issues.
+
+## Phase 14 — Object Page
+
+Status: implemented; stopped for the user's Phase 14 review. The Fiori create flow has not started.
+
+Added metadata-driven Object Page behavior for `GalacticService.Spacefarers`:
+
+- `UI.Facets` defines General Information and Spacefaring Statistics sections.
+- The General Information field group contains First Name, Last Name, Email, Origin Planet, Department, and Position.
+- The Spacefaring Statistics field group contains Stardust Collection, Wormhole Navigation Skill, and Spacesuit Color.
+- Origin Planet uses UI-only read-only field control because it is assigned from the authenticated user's planet by the backend.
+- First Name, Last Name, Email, Department, Position, Stardust Collection, Wormhole Navigation Skill, and Spacesuit Color remain editable through the standard draft flow.
+- Department and Position use the value help introduced with the List Report annotations.
+
+TDD evidence: focused Object Page tests initially failed because the facets, field groups, and read-only origin-planet annotation were absent. After adding them, the test exposed the compiler's flattened CSN representation for qualified field-group data; the assertions now verify that actual representation while EDMX compilation verifies the resulting OData annotations. The first implementation used CAP's `@readonly`, and the full regression suite proved that CAP removed attempted planet values before the security handlers could reject them. Replacing it with UI-only `UI.FieldControl: #ReadOnly` restored all strict planet-policy behavior.
+
+Verification:
+
+- A live authenticated draft edit changed Stardust Collection and Spacesuit Color, returned the updated draft values, and was discarded afterward.
+- Live metadata contained both qualified field groups, both reference facets, and read-only UI field control for Origin Planet. The manifest retained List Report row navigation to `SpacefarersObjectPage`.
+- Focused tests cover the two sections, their exact fields, read-only Origin Planet, and editable required statistics.
+- `npm test`: 137 tests passed across 11 files. The strict planet-conflict and reassignment cases pass with the UI-only field control.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
+- CodeScene scores the new Object Page test at 10.0; the pre-commit safeguard passed with no issues.

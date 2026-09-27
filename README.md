@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 13 defines the metadata-driven Spacefarer List Report. It displays the required business columns, supports useful filters with Department and Position value help, and navigates each row to the generated Object Page route. Object Page sections and editing annotations are reserved for Phase 14. There is no administrator or cross-planet bypass.
+Phase 14 defines the metadata-driven Spacefarer Object Page. It groups general information and spacefaring statistics into sections, supports draft editing, keeps the backend-assigned origin planet read-only, and retains value help for Department and Position. Fiori creation remains the next phase. There is no administrator or cross-planet bypass.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
