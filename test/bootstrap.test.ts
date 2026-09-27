@@ -23,16 +23,4 @@ describe("CAP bootstrap", () => {
     expect(status).toBe(200);
     expect(data).toMatch(/GalacticService/);
   });
-
-  it("rejects anonymous access to the service", async () => {
-    await expect(GET("/odata/v4/galactic/$metadata")).rejects.toMatchObject({ status: 401 });
-  });
-
-  it("rejects an unconfigured username", async () => {
-    await expect(
-      GET("/odata/v4/galactic/$metadata", {
-        auth: { username: "unknown-user", password: "anything" },
-      }),
-    ).rejects.toMatchObject({ status: 401 });
-  });
 });

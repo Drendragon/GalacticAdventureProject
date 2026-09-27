@@ -65,6 +65,12 @@
                 "SpacefarerUser"
               ]
             },
+            "roleless-user": {
+              "password": "roleless-demo",
+              "attr": {
+                "planet": "Earth"
+              }
+            },
             "*": false
           }
         }

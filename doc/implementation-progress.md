@@ -233,3 +233,24 @@ Verification:
 - `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
 - CodeScene: all scoreable touched application and test files retain 10.0; the pre-commit safeguard passed with 6 eligible files checked and no issues across 8 modified files.
 - Independent read-only review found no critical or important issues and confirmed the transaction callback follows CAP's root commit semantics. It deferred changeset rollback and explicit active-PATCH coverage to Phase 10, along with making the logger-spy teardown resilient to a failed assertion.
+
+## Phase 8 — Authorization
+
+Status: implemented; stopped for the user's Phase 8 review. Phase 9 has not started.
+
+The `GalacticService` already carried `@requires: 'SpacefarerUser'` from the protected service shell introduced in Phase 1. Phase 8 completed and isolated its authorization evidence:
+
+- Anonymous requests and unknown Basic-auth usernames are rejected with HTTP 401.
+- Added a configured `roleless-user` with valid credentials and an Earth attribute but no application role. CAP authenticates this identity and rejects service access with HTTP 403.
+- Existing Earth and Mars fixtures retain `SpacefarerUser` and can access the service.
+- No administrator, wildcard role, or unrestricted application identity exists.
+- Moved the anonymous and unknown-user assertions from bootstrap coverage into a focused authorization suite.
+
+TDD evidence: before `roleless-user` was configured, the new missing-role case returned 401 because authentication failed. After adding the identity without `SpacefarerUser`, the same request reached authorization and returned the required 403.
+
+Verification:
+
+- The focused authorization and bootstrap suites passed 6 tests; the complete suite passed 88 tests across 8 files.
+- `npm run typecheck`, `npm run format:check`, CDS-to-EDMX compilation, and `git diff --check`: passed.
+- CodeScene: both modified test files score 10.0; the pre-commit safeguard passed with 2 eligible files checked and no issues across 5 modified files.
+- Independent read-only review found no issues. It confirmed the fixture is development-scoped, production still selects JWT without demo users, and no administrator or privileged bypass exists.

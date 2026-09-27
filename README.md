@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 7 adds the active `after CREATE` lifecycle hook. After a successful transaction commits, CAP sends the new candidate's welcome message through the configurable SMTP notification service. Draft creation, draft edits, failed validation, and active updates do not send welcome messages. Row-level planet isolation is added in a subsequent phase. There is no Fiori application yet.
+Phase 8 completes service-level authentication and role authorization for the local demo. Anonymous requests and unknown credentials are rejected with `401`, while an authenticated user without `SpacefarerUser` is rejected with `403`. There is no administrator or unrestricted application role. Row-level planet isolation is added in Phase 9. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -62,17 +62,18 @@ The MailHog profile requires Docker Desktop to be running in Linux-container mod
 
 The following credentials are public development fixtures, not production accounts:
 
-| Username          | Password          | Role             | Planet                  |
-| ----------------- | ----------------- | ---------------- | ----------------------- |
-| `earth-user`      | `earth-demo`      | `SpacefarerUser` | Earth                   |
-| `mars-user`       | `mars-demo`       | `SpacefarerUser` | Mars                    |
-| `planetless-user` | `planetless-demo` | `SpacefarerUser` | None (negative fixture) |
+| Username          | Password          | Role             | Planet                   |
+| ----------------- | ----------------- | ---------------- | ------------------------ |
+| `earth-user`      | `earth-demo`      | `SpacefarerUser` | Earth                    |
+| `mars-user`       | `mars-demo`       | `SpacefarerUser` | Mars                     |
+| `planetless-user` | `planetless-demo` | `SpacefarerUser` | None (negative fixture)  |
+| `roleless-user`   | `roleless-demo`   | None             | Earth (negative fixture) |
 
 The landing page is public; the OData service requires the role above. CAP's built-in `basic` authentication validates these fixed users without enabling its default sample users. Unknown usernames are rejected. Use separate private browser sessions when switching users because browsers cache Basic authentication credentials.
 
 These settings apply to development and tests. The production profile selects JWT authentication and requires future identity-provider configuration and dependencies; this repository is not a production deployment setup.
 
-The planetless identity exists to prove that lifecycle writes require a valid planet attribute. The agreed security design has no administrator role or cross-planet bypass. At this phase, role-protected reads are not yet filtered by planet; row-level enforcement will be implemented and tested before the backend milestone is complete.
+The planetless identity proves that lifecycle writes require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. The agreed security design has no administrator role or cross-planet bypass. At this phase, role-protected reads are not yet filtered by planet; row-level enforcement will be implemented and tested in Phase 9.
 
 ## MailHog
 
@@ -103,7 +104,7 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, OData metadata, and authentication. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
+The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
 
 Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
 
@@ -120,6 +121,7 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `db/schema.cds`                       | The persistence model for Spacefarers and the shared catalogs.                     |
 | `db/data/`                            | Deterministic CSV fixtures loaded into the local database at startup.              |
 | `test/bootstrap.test.ts`              | TypeScript tests using `cds.test` and Vitest.                                      |
+| `test/authorization.test.ts`          | Anonymous, invalid-credential, and missing-role access tests.                      |
 | `test/domain-model.test.ts`           | Model compilation and SQLite persistence tests.                                    |
 | `test/seed-data.test.ts`              | Seed loading, relationship consistency, and demo-volume tests.                     |
 | `test/service.test.ts`                | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
