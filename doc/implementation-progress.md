@@ -325,3 +325,20 @@ Verification:
 - Live API verification: all required Phase 11 operations and query capabilities passed against `http://localhost:4004/odata/v4/galactic`.
 - The live verification cleaned up both created active records before stopping the in-memory server.
 - Independent review reproduced the README commands and found that changing only the authentication header left the example's Earth filter in place. The demo now provides separate Earth and Mars queries and explicitly starts MailHog before promising inbox capture. No other findings remained.
+
+## Phase 12 — Fiori Application Scaffold
+
+Status: implemented; stopped for the user's Phase 12 review. Business UI annotations have not started.
+
+Added the generated TypeScript Fiori elements application and integrated its toolchain with the existing CAP workspace:
+
+- The application targets `GalacticService.Spacefarers` through OData V4 and provides List Report and Object Page routes.
+- The workspace uses TypeScript 5.9.3 consistently across backend and frontend because the current SAP Fiori ESLint and generated TypeScript configuration are incompatible with TypeScript 7.
+- Root verification now includes separate backend and frontend type checks, plus explicit frontend lint and UI5 build commands.
+- Vitest retains its standard dependency exclusions in addition to excluding the opt-in MailHog test. UI5 middleware is disabled only inside backend test servers.
+- UI5 resource bundles explicitly use the root bundle as their fallback locale, and generated OPA artifacts are excluded from repository formatting.
+- VS Code recommends the SAP Fiori tools extension pack alongside the existing CDS extension.
+- VS Code uses the workspace TypeScript 5.9.3 SDK, preventing its bundled compiler from reporting incompatible generated-project diagnostics.
+- The combined CAP and MailHog debug profile opens the Spacefarer application directly in a debug-enabled Chrome window.
+
+The scaffold does not yet define `UI.LineItem`, header, field-group, or facet annotations. Those business-facing page definitions belong to the next frontend phases.

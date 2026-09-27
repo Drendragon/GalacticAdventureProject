@@ -6,3 +6,5 @@ package-lock.json
 gen
 .superpowers
 @cds-models
+app/spacefarer/webapp/test/integration/**/*.gen.ts
+app/spacefarer/webapp/test/integration/**/*.gen.d.ts

@@ -3,6 +3,8 @@
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "prettier.requireConfig": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

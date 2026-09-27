@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 11 verifies that the backend API is stable for frontend work. Live HTTP checks cover active CRUD, OData filtering, ordering, pagination, counts, expansion, Earth/Mars isolation, structured validation errors, the complete draft lifecycle, and real MailHog delivery. There is no administrator or cross-planet bypass. There is no Fiori application yet.
+Phase 12 adds the TypeScript Fiori elements application shell for Spacefarers. CAP serves it at `/galactic.spacefarers.spacefarer`, and the workspace provides shared frontend type-check, lint, build, and formatting checks. Business-facing list and object-page annotations are reserved for the next frontend phases. There is no administrator or cross-planet bypass.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -21,10 +21,10 @@ With NVM for Windows, select Node with `nvm use 24.21.0`. The `.nvmrc` records t
 
 ```powershell
 npm ci
-npm run watch
+npm run watch-spacefarer
 ```
 
-Open the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The endpoints require one of the configured demo users.
+Open the [Spacefarer application](http://localhost:4004/galactic.spacefarers.spacefarer/index.html) or the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The application and endpoints require one of the configured demo users.
 
 `npm start` runs `cds serve` without watching files. `npm run watch` runs `cds watch`, which restarts the server when project files change. CAP detects `tsconfig.json` and loads TypeScript through the locally installed `tsx` runner. Stop either command with Ctrl+C.
 
@@ -40,7 +40,7 @@ The demo data contains six Earth and six Mars Spacefarers, so each configured us
 
 Write application handlers, tests, and executable tooling in `.ts` files. CDS models remain `.cds` files. `tsconfig.json` enables strict type checking and source maps; `@cap-js/cds-types` provides CAP API types. CAP's standard `cds-typer` tooling generates model types as models are added. Generated `@cds-models/` files are ignored by Git and Prettier.
 
-`tsx` runs TypeScript without checking types, so run `npm run typecheck` as well as `npm test`. Tests use Vitest's familiar `describe`, `it`, and `expect` API. `test/setup.ts` registers the same CommonJS `tsx` loader as the CAP CLI and enables TypeScript handler discovery when tests start CAP programmatically.
+`tsx` runs TypeScript without checking types, so run `npm run typecheck` as well as `npm test`. The root type-check command validates both the CAP backend and the Fiori application. `npm run lint:frontend` applies the Fiori tools ESLint rules, and `npm run build:frontend` creates the optimized UI5 bundle. Tests use Vitest's familiar `describe`, `it`, and `expect` API. `test/setup.ts` registers the same CommonJS `tsx` loader as the CAP CLI, enables TypeScript handler discovery, and disables UI5 middleware only for isolated backend test servers.
 
 These start commands are for local development. A future production deployment should compile TypeScript to JavaScript and run the built service.
 
@@ -48,15 +48,17 @@ These start commands are for local development. A future production deployment s
 
 Open **Run and Debug**, select a configuration, and press **F5**:
 
-| Configuration            | Behavior                                                                                                                                                          |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CAP: Debug**           | Type-checks the project and starts the CAP server with the debugger attached. No Docker required.                                                                 |
-| **CAP: Debug + MailHog** | Type-checks, starts MailHog and CAP, then opens the application in a debug-enabled Chrome window. Stopping debugging also stops this project's MailHog container. |
-| **CAP: Debug tests**     | Type-checks and runs the TypeScript tests with debugging enabled.                                                                                                 |
+| Configuration            | Behavior                                                                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CAP: Debug**           | Type-checks the project and starts the CAP server with the debugger attached. No Docker required.                                                                            |
+| **CAP: Debug + MailHog** | Type-checks, starts MailHog and CAP, then opens the Spacefarer application in a debug-enabled Chrome window. Stopping debugging also stops this project's MailHog container. |
+| **CAP: Debug tests**     | Type-checks and runs the TypeScript tests with debugging enabled.                                                                                                            |
 
-Set breakpoints in `.ts` files. The integrated MailHog profile opens CAP's reported server URL, which is the landing page until the Fiori application is added. The server profiles run once; restart the debug session after editing handlers. Stop any existing `npm start` or `npm run watch` process first so port `4004` is available.
+Set breakpoints in `.ts` files. The integrated MailHog profile opens the Fiori application directly after CAP reports that the server is ready. The server profiles run once; restart the debug session after editing handlers. Stop any existing `npm start` or `npm run watch` process first so port `4004` is available.
 
 The MailHog profile requires Docker Desktop to be running in Linux-container mode. It controls the same MailHog container as manual `docker compose` commands, including stopping it if it was already running. MailHog uses in-memory storage, so its inbox is cleared when restarted. If VS Code exits unexpectedly before teardown, run `docker compose stop mailhog` yourself. The debug tasks do not start or stop Docker Desktop.
+
+Install the workspace recommendations when VS Code offers them. They include SAP CDS language support and the SAP Fiori tools extension pack used to generate and maintain the UI application.
 
 ## Demo Users
 
@@ -186,6 +188,8 @@ try {
 
 ```powershell
 npm run typecheck
+npm run lint:frontend
+npm run build:frontend
 npm test
 npm run format:check
 docker compose config --quiet
@@ -220,6 +224,7 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
 | `vitest.mailhog.config.mts`           | Isolated Vitest configuration for the opt-in MailHog integration check.            |
 | `tsconfig.json`                       | Strict TypeScript settings, CAP type resolution, and source maps.                  |
+| `app/spacefarer/`                     | TypeScript SAP Fiori elements application served through CAP.                      |
 | `.vscode/launch.json`                 | Debug configurations for the server and tests.                                     |
 | `.vscode/tasks.json`                  | Type-checking and MailHog lifecycle tasks for debugging.                           |
 | `compose.yaml`                        | Local MailHog container.                                                           |

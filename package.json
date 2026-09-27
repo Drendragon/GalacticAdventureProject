@@ -11,9 +11,14 @@
     "watch": "cds watch",
     "test": "vitest run",
     "test:mailhog": "vitest run --config vitest.mailhog.config.mts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run typecheck:backend && npm run typecheck:frontend",
+    "typecheck:backend": "tsc --noEmit",
+    "typecheck:frontend": "npm run typecheck --workspace spacefarer",
+    "lint:frontend": "npm run lint --workspace spacefarer",
+    "build:frontend": "npm run build --workspace spacefarer",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "watch-spacefarer": "cds watch --open galactic.spacefarers.spacefarer/index.html?sap-ui-xx-viewCache=false --livereload false"
   },
   "repository": {
     "type": "git",
@@ -106,10 +111,17 @@
     "@types/nodemailer": "8.0.2",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
-    "typescript": "7.0.2",
-    "vitest": "5.0.2"
+    "typescript": "5.9.3",
+    "vitest": "5.0.2",
+    "cds-plugin-ui5": "^0.17.0"
   },
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"
-  }
+  },
+  "workspaces": [
+    "app/*"
+  ],
+  "sapux": [
+    "app/spacefarer"
+  ]
 }

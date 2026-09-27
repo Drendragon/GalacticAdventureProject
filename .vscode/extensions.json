@@ -4,6 +4,7 @@
     "esbenp.prettier-vscode",
     "qwtel.sqlite-viewer",
     "mechatroner.rainbow-csv",
-    "ms-azuretools.vscode-containers"
+    "ms-azuretools.vscode-containers",
+    "SAPSE.sap-ux-fiori-tools-extension-pack"
   ]
 }
