@@ -18,7 +18,7 @@
     "build:frontend": "npm run build --workspace spacefarer",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "watch-spacefarer": "cds watch --open galactic.spacefarers.spacefarer/index.html?sap-ui-xx-viewCache=false --livereload false"
+    "watch-spacefarer": "cds watch --open spacefarers/index.html?sap-ui-xx-viewCache=false --livereload false"
   },
   "repository": {
     "type": "git",

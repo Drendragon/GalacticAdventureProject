@@ -4,6 +4,9 @@ specVersion: "4.0"
 metadata:
   name: galactic.spacefarers.spacefarer
 type: application
+customConfiguration:
+  cds-plugin-ui5:
+    mountPath: /spacefarers
 server:
   customMiddleware:
     - name: fiori-tools-proxy

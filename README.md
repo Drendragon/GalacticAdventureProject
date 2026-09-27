@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 12 adds the TypeScript Fiori elements application shell for Spacefarers. CAP serves it at `/galactic.spacefarers.spacefarer`, and the workspace provides shared frontend type-check, lint, build, and formatting checks. Business-facing list and object-page annotations are reserved for the next frontend phases. There is no administrator or cross-planet bypass.
+Phase 13 defines the metadata-driven Spacefarer List Report. It displays the required business columns, supports useful filters with Department and Position value help, and navigates each row to the generated Object Page route. Object Page sections and editing annotations are reserved for Phase 14. There is no administrator or cross-planet bypass.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -24,7 +24,7 @@ npm ci
 npm run watch-spacefarer
 ```
 
-Open the [Spacefarer application](http://localhost:4004/galactic.spacefarers.spacefarer/index.html) or the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The application and endpoints require one of the configured demo users.
+Open the [Spacefarer application](http://localhost:4004/spacefarers/index.html) or the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The application and endpoints require one of the configured demo users.
 
 `npm start` runs `cds serve` without watching files. `npm run watch` runs `cds watch`, which restarts the server when project files change. CAP detects `tsconfig.json` and loads TypeScript through the locally installed `tsx` runner. Stop either command with Ctrl+C.
 

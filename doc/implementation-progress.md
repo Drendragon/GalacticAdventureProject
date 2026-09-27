@@ -342,3 +342,27 @@ Added the generated TypeScript Fiori elements application and integrated its too
 - The combined CAP and MailHog debug profile opens the Spacefarer application directly in a debug-enabled Chrome window.
 
 The scaffold does not yet define `UI.LineItem`, header, field-group, or facet annotations. Those business-facing page definitions belong to the next frontend phases.
+
+## Phase 13 — List Report
+
+Status: implemented; stopped for the user's Phase 13 review. Object Page annotations have not started.
+
+Added metadata-driven List Report behavior for `GalacticService.Spacefarers`:
+
+- A read-only calculated `name` combines first and last names and remains sortable through OData.
+- `UI.LineItem` defines Name, Origin Planet, Department, Position, Stardust Collection, Wormhole Navigation Skill, and Spacesuit Color in the planned order.
+- `UI.SelectionFields` exposes Origin Planet, Department, Position, and Spacesuit Color as filters.
+- Department and Position use CAP-generated value help and display their names instead of raw UUIDs.
+- `UI.HeaderInfo` supplies the Spacefarer title used when navigating from a row to the existing Object Page route.
+- Focused model tests verify the calculated name, exact columns, selection fields, and association value-help metadata.
+
+Sorting, filtering, and pagination remain generic OData/Fiori elements behavior; no freestyle controller or custom table implementation was added.
+
+TDD evidence: the focused annotation tests first failed because the service exposed neither a calculated name nor the required UI annotations. Department and Position value-help tests then failed until the catalog projections and association text paths were annotated.
+
+Verification:
+
+- Live authenticated OData checks verified full-name sorting, spacesuit-color filtering, `$top`/`$skip` pagination, association expansion, and the served annotation metadata; the Fiori application endpoint returned HTTP 200.
+- `npm test`: 131 tests passed across 10 files, including 7 focused List Report annotation cases.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
+- CodeScene scores the new test at 10.0; the pre-commit safeguard passed with no issues.

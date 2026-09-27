@@ -27,7 +27,7 @@
       "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
       "serverReadyAction": {
         "pattern": "server listening on.*url: '(https?://[^']+)'",
-        "uriFormat": "%s/galactic.spacefarers.spacefarer/index.html?sap-ui-xx-viewCache=false",
+        "uriFormat": "%s/spacefarers/index.html?sap-ui-xx-viewCache=false",
         "action": "debugWithChrome"
       },
       "preLaunchTask": "debug: prepare with MailHog",
