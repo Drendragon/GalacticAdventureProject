@@ -280,3 +280,26 @@ Verification:
 - `npm test`, `npm run typecheck`, `npm run format:check`, CDS-to-EDMX compilation, and `git diff --check`: passed.
 - CodeScene: all modified TypeScript files score 10.0; the pre-commit safeguard passed with no issues.
 - Independent read-only review found two important draft-navigation gaps. Both were reproduced with failing regression tests and closed by the generalized source guard described above.
+
+## Phase 10 — Backend Tests
+
+Status: implemented; stopped for the user's Phase 10 review. Phase 11 has not started.
+
+Completed the backend verification matrix before frontend work:
+
+- Existing focused suites already covered active CRUD, required values, numeric ranges and defaults, assignment consistency, partial updates, incomplete-draft activation, authentication, role and planet authorization, cross-planet isolation, shared read-only catalogs, draft lifecycle, counts, expansion, navigation, and JSON OData batches.
+- Added `earth-colleague`, a second authorized Earth identity, to distinguish planet scope from draft ownership. Both Earth users can read Earth active records, while direct draft reads, draft updates, catalog navigation, and draft-administration navigation remain private to the draft owner.
+- Added explicit notification suppression tests for direct active updates, discarded drafts, failed draft activation, and rolled-back atomic batches. The rollback case also verifies that the earlier valid create is absent after the changeset fails.
+- Hardened the notification-service contract with exact local SMTP defaults, custom sender, and rejected-delivery tests. Logger teardown now remains safe when an assertion fails.
+- Added `npm run test:mailhog` as an explicit integration check. It sends a uniquely addressed message through real SMTP and verifies its subject and body through MailHog's local API. Routine `npm test` excludes this file and uses the notification test double.
+
+Security finding: CAP protected another user's direct draft read, but navigation through that draft bypassed ownership when both users shared the same planet. Focused tests reproduced HTTP 200 responses for the department and `DraftAdministrativeData` routes. Draft-source navigation now requires both the authenticated planet and `DraftAdministrativeData.InProcessByUser`, closing the leak while preserving shared active records and owner navigation.
+
+TDD evidence: the first same-planet ownership test failed with HTTP 401 until the second Earth fixture was configured. Direct draft ownership then passed, while the new navigation cases failed with HTTP 200 before the draft-owner source predicate was added. The notification rollback and suppression tests passed against the existing post-commit handler, documenting the intended transaction behavior without implementation changes.
+
+Verification:
+
+- `npm test`: 124 tests passed across 9 routine test files; the MailHog integration file remained excluded.
+- `npm run test:mailhog`: 1 integration test passed against a temporarily started local MailHog container, which was stopped and removed afterward.
+- `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
+- CodeScene: all supported modified TypeScript files score 10.0; `.mts` Vitest configuration files are unsupported by the single-file scorer. The pre-commit safeguard passed with no issues.

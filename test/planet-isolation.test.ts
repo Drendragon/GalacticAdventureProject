@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 const { DELETE, GET, PATCH, POST } = cds.test(__dirname + "/..");
 const servicePath = "/odata/v4/galactic";
 const earthAuth = { username: "earth-user", password: "earth-demo" };
+const earthColleagueAuth = { username: "earth-colleague", password: "earth-colleague-demo" };
 const marsAuth = { username: "mars-user", password: "mars-demo" };
 const planetlessAuth = { username: "planetless-user", password: "planetless-demo" };
 const earthID = "30000000-0000-4000-8000-000000000001";
@@ -42,6 +43,12 @@ describe("planet-level Spacefarer isolation", () => {
 
   it("hides an Earth active record from the Mars user", async () => {
     await expect(GET(activePath(earthID), { auth: marsAuth })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("allows another Earth user to read an Earth active record", async () => {
+    const response = await GET(activePath(earthID), { auth: earthColleagueAuth });
+
+    expect(response.status).toBe(200);
   });
 
   it("prevents the Earth user from updating a Mars record", async () => {
@@ -91,6 +98,30 @@ describe("planet-level Spacefarer isolation", () => {
     await POST(`${servicePath}/Spacefarers`, { ID: draftID }, { auth: earthAuth });
 
     await expect(GET(draftPath(draftID), { auth: marsAuth })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("hides an Earth draft from another Earth user", async () => {
+    await POST(`${servicePath}/Spacefarers`, { ID: draftID }, { auth: earthAuth });
+
+    await expect(GET(draftPath(draftID), { auth: earthColleagueAuth })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("blocks department navigation through another Earth user's draft", async () => {
+    await POST(`${servicePath}/Spacefarers`, { ID: draftID, department_ID: "10000000-0000-4000-8000-000000000001" }, { auth: earthAuth });
+
+    await expect(GET(`${draftPath(draftID)}/department`, { auth: earthColleagueAuth })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("blocks draft-administration navigation through another Earth user's draft", async () => {
+    await POST(`${servicePath}/Spacefarers`, { ID: draftID }, { auth: earthAuth });
+
+    await expect(GET(`${draftPath(draftID)}/DraftAdministrativeData`, { auth: earthColleagueAuth })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("prevents another Earth user from updating an owned draft", async () => {
+    await POST(`${servicePath}/Spacefarers`, { ID: draftID }, { auth: earthAuth });
+
+    await expect(PATCH(draftPath(draftID), { spacesuitColor: "Gold" }, { auth: earthColleagueAuth })).rejects.toMatchObject({ status: 403 });
   });
 
   it("prevents the Earth user from editing a Mars active record as a draft", async () => {

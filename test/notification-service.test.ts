@@ -58,7 +58,7 @@ describe("notification service", () => {
     });
   });
 
-  it("omits SMTP authentication when credentials are not configured", () => {
+  it("uses local MailHog and bounded timeouts by default", () => {
     let options: SMTPTransport.Options | undefined;
     const transport: MailTransport = { sendMail: vi.fn() };
 
@@ -67,7 +67,30 @@ describe("notification service", () => {
       return transport;
     });
 
-    expect(options).not.toHaveProperty("auth");
+    expect(options).toEqual({
+      host: "127.0.0.1",
+      port: 1025,
+      secure: false,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
+    });
+  });
+
+  it("uses the configured sender", async () => {
+    const sendMail = vi.fn().mockResolvedValue({ messageId: "welcome-2" });
+    const service = createNotificationService({ SMTP_FROM: "Recruitment <crew@galactic.example>" }, () => ({ sendMail }));
+
+    await service.sendWelcomeEmail(candidate);
+
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ from: "Recruitment <crew@galactic.example>" }));
+  });
+
+  it("reports transport delivery failures", async () => {
+    const deliveryFailure = new Error("SMTP unavailable");
+    const service = createNotificationService({}, () => ({ sendMail: vi.fn().mockRejectedValue(deliveryFailure) }));
+
+    await expect(service.sendWelcomeEmail(candidate)).rejects.toBe(deliveryFailure);
   });
 
   it("rejects incomplete SMTP credentials", () => {

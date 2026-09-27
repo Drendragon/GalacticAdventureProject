@@ -10,6 +10,7 @@
     "start": "cds serve",
     "watch": "cds watch",
     "test": "vitest run",
+    "test:mailhog": "vitest run --config vitest.mailhog.config.mts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -43,6 +44,15 @@
           "users": {
             "earth-user": {
               "password": "earth-demo",
+              "roles": [
+                "SpacefarerUser"
+              ],
+              "attr": {
+                "planet": "Earth"
+              }
+            },
+            "earth-colleague": {
+              "password": "earth-colleague-demo",
               "roles": [
                 "SpacefarerUser"
               ],

@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 9 enforces planet-level Spacefarer isolation in the backend. Earth and Mars users see, count, navigate, edit, and delete only records from their own planet; the same rule applies inside drafts and OData batches. Shared department and position catalogs remain readable across planets. There is no administrator or cross-planet bypass. There is no Fiori application yet.
+Phase 10 completes the automated backend test matrix before frontend work. It covers validation, defaults, authorization, same-planet draft ownership, transaction rollback, notification boundaries, and an explicit MailHog integration check. There is no administrator or cross-planet bypass. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -62,18 +62,19 @@ The MailHog profile requires Docker Desktop to be running in Linux-container mod
 
 The following credentials are public development fixtures, not production accounts:
 
-| Username          | Password          | Role             | Planet                   |
-| ----------------- | ----------------- | ---------------- | ------------------------ |
-| `earth-user`      | `earth-demo`      | `SpacefarerUser` | Earth                    |
-| `mars-user`       | `mars-demo`       | `SpacefarerUser` | Mars                     |
-| `planetless-user` | `planetless-demo` | `SpacefarerUser` | None (negative fixture)  |
-| `roleless-user`   | `roleless-demo`   | None             | Earth (negative fixture) |
+| Username          | Password               | Role             | Planet                   |
+| ----------------- | ---------------------- | ---------------- | ------------------------ |
+| `earth-user`      | `earth-demo`           | `SpacefarerUser` | Earth                    |
+| `earth-colleague` | `earth-colleague-demo` | `SpacefarerUser` | Earth                    |
+| `mars-user`       | `mars-demo`            | `SpacefarerUser` | Mars                     |
+| `planetless-user` | `planetless-demo`      | `SpacefarerUser` | None (negative fixture)  |
+| `roleless-user`   | `roleless-demo`        | None             | Earth (negative fixture) |
 
 The landing page is public; the OData service requires the role above. CAP's built-in `basic` authentication validates these fixed users without enabling its default sample users. Unknown usernames are rejected. Use separate private browser sessions when switching users because browsers cache Basic authentication credentials.
 
 These settings apply to development and tests. The production profile selects JWT authentication and requires future identity-provider configuration and dependencies; this repository is not a production deployment setup.
 
-The planetless identity proves that all Spacefarer operations require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. A CDS instance restriction filters active records, counts, expansions, mutations, and batch subrequests by `$user.planet`; CAP's draft ownership rules protect direct draft access. A source-navigation guard applies the planet predicate when following associations from either an active Spacefarer or a draft, including generated draft-administration data. The agreed security design has no administrator role or cross-planet bypass.
+The planetless identity proves that all Spacefarer operations require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. `earth-colleague` proves that two users can share Earth active records while drafts remain private to their owner. A CDS instance restriction filters active records, counts, expansions, mutations, and batch subrequests by `$user.planet`; CAP's draft ownership rules protect direct draft access. A source-navigation guard applies both the planet and draft-owner predicates when following associations from a draft, including generated draft-administration data. The agreed security design has no administrator role or cross-planet bypass.
 
 ## MailHog
 
@@ -84,6 +85,8 @@ docker compose up -d mailhog
 ```
 
 Open the [MailHog inbox](http://localhost:8025). SMTP listens on `127.0.0.1:1025`; both published ports are limited to the local machine. Messages stay in MailHog rather than being sent to external recipients. Its default storage is in memory, so restarting it clears the inbox.
+
+With MailHog running, execute `npm run test:mailhog` for the explicit SMTP integration check. It sends one welcome message to a unique test address and verifies its subject and body through MailHog's local HTTP API. The routine `npm test` suite excludes this check and never requires SMTP.
 
 The notification service defaults to this local MailHog instance. Copy `.env.example` to `.env` to change its SMTP host, port, sender, secure-transport flag, and connection, greeting, or socket timeouts. Configure both `SMTP_USER` and `SMTP_PASSWORD` when a future SMTP provider requires credentials; local MailHog requires neither. Local `.env` files are ignored by Git.
 
@@ -129,7 +132,9 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `test/lifecycle.test.ts`              | Focused creation, update, assignment, default, and draft integrity tests.          |
 | `test/notification-service.test.ts`   | Welcome-message and SMTP configuration tests without external delivery.            |
 | `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |
+| `test/mailhog.integration.test.ts`    | Explicit real-SMTP capture check, excluded from the routine test suite.            |
 | `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
+| `vitest.mailhog.config.mts`           | Isolated Vitest configuration for the opt-in MailHog integration check.            |
 | `tsconfig.json`                       | Strict TypeScript settings, CAP type resolution, and source maps.                  |
 | `.vscode/launch.json`                 | Debug configurations for the server and tests.                                     |
 | `.vscode/tasks.json`                  | Type-checking and MailHog lifecycle tasks for debugging.                           |
