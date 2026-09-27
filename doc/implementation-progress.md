@@ -151,3 +151,35 @@ Verification:
 - `npx cds compile srv/galactic-service.cds --to edmx --service GalacticService`: produced valid OData V4 metadata with all three entity sets, draft fields and actions, and read-only capability annotations.
 - CodeScene: the new service test scores 10.0; the pre-commit safeguard passed with 1 eligible file checked and no issues across 4 modified files.
 - Independent read-only review found no critical or important issues. Its two minor test-hardening suggestions were applied: update/delete rejection is now checked for both catalogs, and draft discard explicitly verifies that the draft no longer exists while the active row remains unchanged. Re-review confirmed both findings resolved with no regression.
+
+## Phase 5 — CREATE Lifecycle Logic
+
+Status: implemented; stopped for the user's Phase 5 review. Phase 6 has not started.
+
+Added `srv/galactic-service.ts` as a typed `cds.ApplicationService` implementation:
+
+- Active `CREATE` derives `originPlanet` from the authenticated user's nonempty planet attribute, rejects conflicting input, applies deterministic numeric defaults, validates required fields and ranges, verifies catalog references, and enforces matching department/position assignments.
+- Active `UPDATE` loads the existing row and validates the resulting merged state. Omitted values remain unchanged, required values cannot be cleared, planet reassignment is rejected, and partial assignment changes cannot leave a mismatched position and department.
+- Draft `NEW` assigns the trusted planet immediately. Draft `PATCH` prevents planet tampering while allowing incomplete business data. Draft activation reaches the active `CREATE` or `UPDATE` handlers for final validation.
+- The handler asserts at startup that the service projection remains draft-enabled. CAP continues to provide persistence and draft choreography; no CRUD handler was reimplemented.
+
+Ruling: treat an omitted or explicit `null` planet during creation as missing and replace it with the trusted authenticated value. A non-null conflicting value is rejected. Updates treat `null` as a reassignment attempt and reject it.
+
+Ruling: allow incomplete drafts so users can fill fields incrementally. Trusted planet checks run during draft creation and planet edits, while required fields, ranges, references, and cross-field assignment consistency are enforced when the draft is activated.
+
+Ruling: add `planetless-user` as a negative development/test fixture with the application role but no planet attribute. Lifecycle writes reject this identity with HTTP 403. Full read isolation for missing or differing planets remains in the planned authorization phase.
+
+TDD evidence: active creation initially produced database 500 errors for missing trusted/required values and accepted conflicting planets and inconsistent assignments. Update tests then demonstrated that generic PATCH allowed planet reassignment and inconsistent partial assignment changes. Draft tests showed `originPlanet: null`, accepted conflicting draft input, and allowed planet tampering until `NEW` and draft `PATCH` handlers were registered.
+
+TypeScript loader finding: setting `CDS_TYPESCRIPT=tsx` makes CAP discover `.ts` handlers but does not register the transpiler. The CAP CLI normally preloads `tsx/cjs`; `test/setup.ts` now does the same before tests start CAP programmatically.
+
+Verification:
+
+- `npm test`: 77 passed across 5 Vitest files; the focused lifecycle suite contains 43 cases.
+- `npm run typecheck` and `npm run format:check`: passed.
+- CodeScene: the lifecycle test scores 10.0. The handler initially scored 8.67 for compound numeric conditions; extracting named predicates raised it to 10.0.
+- CodeScene's pre-commit safeguard passed with 3 eligible files checked and no issues across 6 modified files.
+- Independent read-only review found that numeric `null` values were incorrectly treated as omitted by `??=` and that one invalid-position test did not reach the position lookup. Defaults now apply only to `undefined`, explicit numeric nulls are covered for creation and update, and the position case supplies a valid department. Re-review confirmed both findings resolved with no regression.
+- Phase 6 notification delivery is intentionally absent. It will add the active `after CREATE` success callback and MailHog transport.
+
+Review follow-up: split the original lifecycle implementation along its existing responsibilities. `galactic-service.ts` now only registers CAP events; `srv/lifecycle/planet-policy.ts` owns trusted-planet rules, `active-record-validation.ts` owns create/update orchestration and scalar validation, `assignment-validation.ts` owns catalog consistency, and `types.ts` contains their shared request shape. The service and all behavior modules retain Code Health 10.0; the type-only module has no standalone score. Independent re-review found no actionable boundary or behavior issues.

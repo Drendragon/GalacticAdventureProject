@@ -59,6 +59,12 @@
                 "planet": "Mars"
               }
             },
+            "planetless-user": {
+              "password": "planetless-demo",
+              "roles": [
+                "SpacefarerUser"
+              ]
+            },
             "*": false
           }
         }
