@@ -78,7 +78,8 @@
   },
   "dependencies": {
     "@cap-js/sqlite": "3.1.1",
-    "@sap/cds": "10.1.1"
+    "@sap/cds": "10.1.1",
+    "nodemailer": "10.0.11"
   },
   "devDependencies": {
     "@cap-js/cds-test": "1.0.2",
@@ -86,6 +87,7 @@
     "@cap-js/cds-types": "0.20.0",
     "@sap/cds-dk": "10.1.0",
     "@types/node": "24.13.6",
+    "@types/nodemailer": "8.0.2",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
     "typescript": "7.0.2",

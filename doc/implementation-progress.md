@@ -183,3 +183,27 @@ Verification:
 - Phase 6 notification delivery is intentionally absent. It will add the active `after CREATE` success callback and MailHog transport.
 
 Review follow-up: split the original lifecycle implementation along its existing responsibilities. `galactic-service.ts` now only registers CAP events; `srv/lifecycle/planet-policy.ts` owns trusted-planet rules, `active-record-validation.ts` owns create/update orchestration and scalar validation, `assignment-validation.ts` owns catalog consistency, and `types.ts` contains their shared request shape. The service and all behavior modules retain Code Health 10.0; the type-only module has no standalone score. Independent re-review found no actionable boundary or behavior issues.
+
+## Phase 6 — Notification Service
+
+Status: implemented; stopped for the user's Phase 6 review. Phase 7 has not started.
+
+Added a small TypeScript notification boundary backed by Nodemailer:
+
+- `sendWelcomeEmail` addresses the created Spacefarer's email and builds the agreed plain-text welcome message.
+- SMTP host, port, sender, secure transport, optional username/password, and bounded connection, greeting, and socket timeouts come from environment variables with local MailHog defaults.
+- Credentials must be provided as a complete username/password pair. The local MailHog path omits authentication.
+- Transport creation is injected in unit tests, so routine verification never needs Docker and cannot deliver external email.
+- The CAP lifecycle does not call this module yet. Phase 7 owns the active `after CREATE` success callback and delivery-failure policy.
+
+Ruling: keep SMTP transport configuration in the adapter while exposing only `sendWelcomeEmail(spacefarer)` to lifecycle code. This allows a future SMTP provider without coupling CAP handlers to Nodemailer.
+
+TDD evidence: the focused notification suite first failed because the service module did not exist, then passed after message construction and configurable transport creation were implemented.
+
+Verification:
+
+- A real SMTP integration check sent a unique welcome message through `127.0.0.1:1025`; MailHog's HTTP API confirmed that it was captured for the intended recipient.
+- `npm test`: 81 tests passed across 6 Vitest files, including 4 focused notification-service cases.
+- `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
+- CodeScene: both new TypeScript files score 10.0; the pre-commit safeguard passed with 2 eligible files checked and no issues across 7 modified files.
+- Independent read-only review found no critical or important issues and confirmed Phase 6 is ready for review. It suggested minor test hardening for every default transport option, a custom sender, and rejected delivery; these can be added with the broader notification coverage in Phase 10.
