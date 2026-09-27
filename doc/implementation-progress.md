@@ -303,3 +303,25 @@ Verification:
 - `npm run test:mailhog`: 1 integration test passed against a temporarily started local MailHog container, which was stopped and removed afterward.
 - `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
 - CodeScene: all supported modified TypeScript files score 10.0; `.mts` Vitest configuration files are unsupported by the single-file scorer. The pre-commit safeguard passed with no issues.
+
+## Phase 11 — Verify Backend Before Building UI
+
+Status: implemented; stopped for the user's Phase 11 review. Phase 12 has not started.
+
+Ran the CAP server and MailHog locally and exercised the public OData API over HTTP rather than through the test harness:
+
+- Earth and Mars each received exactly 6 visible Spacefarers, and every returned row matched the authenticated planet.
+- `$filter`, descending `$orderby`, `$top=5`, `$skip=5`, `$count`, and `$expand=department,position` returned the expected results. The second five-row page contained the sixth visible Earth record.
+- Cross-planet direct reads returned HTTP 404 in both directions.
+- Direct active `POST`, `GET`, `PATCH`, and `DELETE` succeeded. The created record derived `originPlanet: Earth`, persisted its update, and was absent after deletion.
+- A negative stardust create returned HTTP 400 with a structured OData object containing `error.code` and `error.message`; the server also reported `stardustCollection` as the target.
+- The live draft flow covered incomplete creation, patching, new-draft activation, editing an active record, edit activation, a second edit, and discard. Discard retained the last activated value.
+- MailHog captured exactly one welcome email for the direct active create with the expected subject. Both CAP and the temporary MailHog container were stopped afterward.
+
+Added a PowerShell API demo to the README with reusable Basic-auth headers, a combined OData list query, active CRUD, draft activation/edit/discard, and a structured validation-error example. No OpenAPI or Swagger dependency was added because it is outside the assignment requirements.
+
+Verification:
+
+- Live API verification: all required Phase 11 operations and query capabilities passed against `http://localhost:4004/odata/v4/galactic`.
+- The live verification cleaned up both created active records before stopping the in-memory server.
+- Independent review reproduced the README commands and found that changing only the authentication header left the example's Earth filter in place. The demo now provides separate Earth and Mars queries and explicitly starts MailHog before promising inbox capture. No other findings remained.

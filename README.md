@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 10 completes the automated backend test matrix before frontend work. It covers validation, defaults, authorization, same-planet draft ownership, transaction rollback, notification boundaries, and an explicit MailHog integration check. There is no administrator or cross-planet bypass. There is no Fiori application yet.
+Phase 11 verifies that the backend API is stable for frontend work. Live HTTP checks cover active CRUD, OData filtering, ordering, pagination, counts, expansion, Earth/Mars isolation, structured validation errors, the complete draft lifecycle, and real MailHog delivery. There is no administrator or cross-planet bypass. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -96,6 +96,90 @@ Stop this project's MailHog container with:
 
 ```powershell
 docker compose down
+```
+
+## API Demo
+
+With Docker Desktop running, start MailHog and CAP in separate terminals:
+
+```powershell
+docker compose up -d mailhog
+```
+
+```powershell
+npm start
+```
+
+The following PowerShell setup creates Basic-auth headers for both demo planets:
+
+```powershell
+$api = "http://localhost:4004/odata/v4/galactic"
+
+function New-DemoHeaders([string]$credentials) {
+  $token = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($credentials))
+  @{ Authorization = "Basic $token"; Accept = "application/json" }
+}
+
+$earth = New-DemoHeaders "earth-user:earth-demo"
+$mars = New-DemoHeaders "mars-user:mars-demo"
+```
+
+Read the first five records for each planet in descending stardust order, expand their assignments, and request each filtered count:
+
+```powershell
+$earthQuery = '/Spacefarers?$filter=originPlanet%20eq%20%27Earth%27&$orderby=stardustCollection%20desc&$top=5&$skip=0&$count=true&$expand=department,position'
+$marsQuery = '/Spacefarers?$filter=originPlanet%20eq%20%27Mars%27&$orderby=stardustCollection%20desc&$top=5&$skip=0&$count=true&$expand=department,position'
+
+Invoke-RestMethod -Uri ($api + $earthQuery) -Headers $earth
+Invoke-RestMethod -Uri ($api + $marsQuery) -Headers $mars
+```
+
+Create, read, update, and delete an active Spacefarer. The API derives `originPlanet` from the Earth identity and MailHog captures a welcome email after the create commits.
+
+```powershell
+$body = @{
+  IsActiveEntity = $true
+  firstName = "API"
+  lastName = "Voyager"
+  email = "api.voyager@galactic.example"
+} | ConvertTo-Json
+
+$created = Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body $body
+$activeKey = "Spacefarers(ID=$($created.ID),IsActiveEntity=true)"
+
+Invoke-RestMethod -Uri "$api/$activeKey" -Headers $earth
+Invoke-RestMethod -Uri "$api/$activeKey" -Method Patch -Headers $earth -ContentType "application/json" -Body '{"spacesuitColor":"Cerulean"}'
+Invoke-RestMethod -Uri "$api/$activeKey" -Method Delete -Headers $earth
+```
+
+Create and activate a draft, then open a later edit and discard it:
+
+```powershell
+$draftBody = @{
+  firstName = "Draft"
+  lastName = "Voyager"
+  email = "draft.voyager@galactic.example"
+} | ConvertTo-Json
+
+$draft = Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body $draftBody
+$draftKey = "Spacefarers(ID=$($draft.ID),IsActiveEntity=false)"
+$activeKey = "Spacefarers(ID=$($draft.ID),IsActiveEntity=true)"
+
+Invoke-RestMethod -Uri "$api/$draftKey/draftActivate" -Method Post -Headers $earth -ContentType "application/json" -Body '{}'
+Invoke-RestMethod -Uri "$api/$activeKey/draftEdit" -Method Post -Headers $earth -ContentType "application/json" -Body '{"PreserveChanges":false}'
+Invoke-RestMethod -Uri "$api/$draftKey" -Method Patch -Headers $earth -ContentType "application/json" -Body '{"spacesuitColor":"Gold"}'
+Invoke-RestMethod -Uri "$api/$draftKey" -Method Delete -Headers $earth
+Invoke-RestMethod -Uri "$api/$activeKey" -Method Delete -Headers $earth
+```
+
+Invalid input returns an OData error object containing `error.code`, `error.message`, and, when applicable, `error.target`. For example, this request returns HTTP 400 with `stardustCollection` as its target:
+
+```powershell
+try {
+  Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body '{"IsActiveEntity":true,"firstName":"Invalid","lastName":"Candidate","email":"invalid@galactic.example","stardustCollection":-1}'
+} catch {
+  $_.ErrorDetails.Message
+}
 ```
 
 ## Checks
