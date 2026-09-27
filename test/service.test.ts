@@ -26,7 +26,7 @@ const editActiveSpacefarer = (ID: string) => POST(`${spacefarerPath(ID, true)}/d
 
 describe("GalacticService", () => {
   it.each([
-    { entity: "Spacefarers", count: 16 },
+    { entity: "Spacefarers", count: 6 },
     { entity: "Departments", count: 5 },
     { entity: "Positions", count: 8 },
   ])("exposes seeded $entity", async ({ entity, count }) => {

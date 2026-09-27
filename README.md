@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 8 completes service-level authentication and role authorization for the local demo. Anonymous requests and unknown credentials are rejected with `401`, while an authenticated user without `SpacefarerUser` is rejected with `403`. There is no administrator or unrestricted application role. Row-level planet isolation is added in Phase 9. There is no Fiori application yet.
+Phase 9 enforces planet-level Spacefarer isolation in the backend. Earth and Mars users see, count, navigate, edit, and delete only records from their own planet; the same rule applies inside drafts and OData batches. Shared department and position catalogs remain readable across planets. There is no administrator or cross-planet bypass. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -32,7 +32,7 @@ SQLite runs in memory for this local demo. CAP creates the three application tab
 
 The model uses UUID keys. `Spacefarers` also use CAP's managed audit fields. Required persisted values, numeric defaults, numeric ranges, and association targets are declared in CDS. A position must belong to a department, while a spacefarer's department and position are optional. The service handler validates that a selected position belongs to the selected department, including the resulting state of partial updates.
 
-The demo data contains six Earth and six Mars Spacefarers so each configured user will have more than one five-row page after planet isolation is implemented. Europa, Titan, Kepler-186f, and Proxima Centauri b provide additional filtering examples. The fixtures include unassigned Spacefarers, department-only assignments, and matching department/position assignments. CAP loads these rows during database initialization, outside service `CREATE` events, so the future welcome-email handler will not run for seed data.
+The demo data contains six Earth and six Mars Spacefarers, so each configured user has more than one five-row page. Europa, Titan, Kepler-186f, and Proxima Centauri b remain invisible to the Earth and Mars users and provide additional isolation fixtures. The fixtures include unassigned Spacefarers, department-only assignments, and matching department/position assignments. CAP loads these rows during database initialization, outside service `CREATE` events, so seed loading does not send welcome emails.
 
 `Spacefarers` is draft-enabled. CAP's generic OData handlers support draft creation, editing, activation, and discard, as well as direct active `POST`, `GET`, `PATCH`, and `DELETE` requests. The TypeScript handler derives `originPlanet` from the authenticated user, prevents reassignment, applies numeric defaults only on creation, and validates active creation and updates. New drafts receive the trusted planet immediately, while incomplete business fields remain editable until activation. The shared `Departments` and `Positions` catalogs allow reads and reject writes.
 
@@ -73,7 +73,7 @@ The landing page is public; the OData service requires the role above. CAP's bui
 
 These settings apply to development and tests. The production profile selects JWT authentication and requires future identity-provider configuration and dependencies; this repository is not a production deployment setup.
 
-The planetless identity proves that lifecycle writes require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. The agreed security design has no administrator role or cross-planet bypass. At this phase, role-protected reads are not yet filtered by planet; row-level enforcement will be implemented and tested in Phase 9.
+The planetless identity proves that all Spacefarer operations require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. A CDS instance restriction filters active records, counts, expansions, mutations, and batch subrequests by `$user.planet`; CAP's draft ownership rules protect direct draft access. A source-navigation guard applies the planet predicate when following associations from either an active Spacefarer or a draft, including generated draft-administration data. The agreed security design has no administrator role or cross-planet bypass.
 
 ## MailHog
 
@@ -104,7 +104,7 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
+The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Planet-isolation coverage verifies collections, counts, direct records, mutations, drafts, active and draft navigations, generated draft metadata, shared catalogs, missing attributes, and OData batches. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
 
 Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
 
@@ -125,6 +125,7 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `test/domain-model.test.ts`           | Model compilation and SQLite persistence tests.                                    |
 | `test/seed-data.test.ts`              | Seed loading, relationship consistency, and demo-volume tests.                     |
 | `test/service.test.ts`                | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
+| `test/planet-isolation.test.ts`       | Planet-scoped reads, writes, drafts, navigation, counts, and batch tests.          |
 | `test/lifecycle.test.ts`              | Focused creation, update, assignment, default, and draft integrity tests.          |
 | `test/notification-service.test.ts`   | Welcome-message and SMTP configuration tests without external delivery.            |
 | `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |

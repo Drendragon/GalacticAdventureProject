@@ -254,3 +254,29 @@ Verification:
 - `npm run typecheck`, `npm run format:check`, CDS-to-EDMX compilation, and `git diff --check`: passed.
 - CodeScene: both modified test files score 10.0; the pre-commit safeguard passed with 2 eligible files checked and no issues across 5 modified files.
 - Independent read-only review found no issues. It confirmed the fixture is development-scoped, production still selects JWT without demo users, and no administrator or privileged bypass exists.
+
+## Phase 9 — Planet-Level Data Isolation
+
+Status: implemented; stopped for the user's Phase 9 review. Phase 10 has not started.
+
+Added backend-enforced instance authorization for Spacefarers:
+
+- `@restrict` applies `originPlanet = $user.planet` to active Spacefarer operations for `SpacefarerUser`; CAP's draft ownership rules protect direct draft access.
+- A service guard rejects every active or draft Spacefarer operation with HTTP 403 when the authenticated identity lacks a nonempty planet attribute.
+- Creation continues to derive the trusted planet, conflicting input remains forbidden, and planet reassignment remains rejected.
+- Collections, counts, direct reads, expansions, mutations, drafts, and JSON OData batch subrequests are isolated by planet.
+- Shared department and position catalogs remain readable by all authorized users, including the planetless negative fixture, and remain read-only.
+- Every navigation through an active or draft Spacefarer receives an additional source predicate, covering shared catalogs, chained catalog navigation, and generated draft-administration data. No reverse catalog-to-Spacefarer navigation is exposed.
+
+Ruling: use CAP's standard authorization responses: cross-planet direct reads and navigation are hidden with HTTP 404, while forbidden mutations and draft-edit actions return HTTP 403.
+
+Ruling: append the authenticated planet predicate to the active or draft Spacefarer source segment for every READ navigation. Applying `@restrict` to shared catalog targets would incorrectly hide catalogs from authorized users on other planets, while registering only catalog-target handlers would omit generated `DraftAdministrativeData`.
+
+TDD evidence: before the restriction, the focused suite returned all 16 rows, allowed direct cross-planet reads and mutations, and allowed planetless reads. The CDS restriction closed those paths but exposed the shared-target navigation bypass; both department and position navigation initially returned foreign catalog objects. Independent review then reproduced the same bypass through draft department, position, chained position/department, and `DraftAdministrativeData` routes because CAP skips instance restrictions for draft events and the first guard recognized only active paths. Five regression cases failed with HTTP 200 before the guard was generalized to active and draft sources and registered for all READ targets. The resulting tests preserve own-planet navigation and direct shared-catalog access.
+
+Verification:
+
+- The focused planet-isolation suite passes 25 cases covering active and draft source authorization, own-planet access, missing attributes, counts, expansions, mutations, shared catalogs, and batch subrequests.
+- `npm test`, `npm run typecheck`, `npm run format:check`, CDS-to-EDMX compilation, and `git diff --check`: passed.
+- CodeScene: all modified TypeScript files score 10.0; the pre-commit safeguard passed with no issues.
+- Independent read-only review found two important draft-navigation gaps. Both were reproduced with failing regression tests and closed by the generalized source guard described above.

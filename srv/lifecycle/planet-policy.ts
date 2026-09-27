@@ -1,6 +1,6 @@
 import type { SpacefarerData, SpacefarerRequest } from "./types";
 
-function authenticatedPlanet(req: SpacefarerRequest): string {
+export function authenticatedPlanet(req: SpacefarerRequest): string {
   const planet = req.user.attr.planet;
 
   if (typeof planet !== "string" || planet.trim().length === 0) {
@@ -8,6 +8,10 @@ function authenticatedPlanet(req: SpacefarerRequest): string {
   }
 
   return planet.trim();
+}
+
+export function requireAuthenticatedPlanet(req: SpacefarerRequest): void {
+  authenticatedPlanet(req);
 }
 
 export function applyTrustedPlanet(req: SpacefarerRequest): void {
