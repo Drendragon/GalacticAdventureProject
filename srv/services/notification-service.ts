@@ -45,6 +45,8 @@ export function createNotificationService(
   return new NotificationService(transport, environment.SMTP_FROM ?? DEFAULT_SENDER);
 }
 
+export const notificationService = createNotificationService();
+
 function createTransportOptions(environment: Environment): SMTPTransport.Options {
   const options: SMTPTransport.Options = {
     host: environment.SMTP_HOST ?? "127.0.0.1",

@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 6 adds a TypeScript notification service that sends configurable SMTP welcome messages with bounded timeouts. CAP still supplies generic CRUD and draft persistence. The Phase 7 `after CREATE` handler will call this service after a successful transaction; CAP does not trigger email yet. Row-level planet isolation is also added in a subsequent phase. There is no Fiori application yet.
+Phase 7 adds the active `after CREATE` lifecycle hook. After a successful transaction commits, CAP sends the new candidate's welcome message through the configurable SMTP notification service. Draft creation, draft edits, failed validation, and active updates do not send welcome messages. Row-level planet isolation is added in a subsequent phase. There is no Fiori application yet.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -86,7 +86,7 @@ Open the [MailHog inbox](http://localhost:8025). SMTP listens on `127.0.0.1:1025
 
 The notification service defaults to this local MailHog instance. Copy `.env.example` to `.env` to change its SMTP host, port, sender, secure-transport flag, and connection, greeting, or socket timeouts. Configure both `SMTP_USER` and `SMTP_PASSWORD` when a future SMTP provider requires credentials; local MailHog requires neither. Local `.env` files are ignored by Git.
 
-The service constructs and sends real SMTP messages, but CAP does not call it until the Phase 7 `after CREATE` handler is added.
+CAP sends a welcome message after a new active Spacefarer is committed, including activation of a new draft. Delivery is best effort: SMTP failures are logged after commit and do not remove the created record or turn its successful API response into a failure. This version has no durable outbox or automatic retry, so process interruption or SMTP failure can lose a notification.
 
 Stop this project's MailHog container with:
 
@@ -103,33 +103,34 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, OData metadata, and authentication. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction and SMTP transport configuration with an injected transport. Tests do not need Docker or MailHog.
+The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, OData metadata, and authentication. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
 
 Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
 
 ## Files to Explore
 
-| File or directory                   | Purpose                                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `package.json`                      | Runtime and development dependencies, commands, and CAP configuration profiles.    |
-| `package-lock.json`                 | Resolved dependency versions for reproducible installs with `npm ci`.              |
-| `srv/galactic-service.cds`          | The protected OData service with draft-enabled Spacefarers and read-only catalogs. |
-| `srv/galactic-service.ts`           | Small service entry point that registers the Spacefarer lifecycle handlers.        |
-| `srv/lifecycle/`                    | Trusted-planet, active-record, assignment, and shared-type modules.                |
-| `srv/services/`                     | Configurable SMTP notification boundary and welcome-message construction.          |
-| `db/schema.cds`                     | The persistence model for Spacefarers and the shared catalogs.                     |
-| `db/data/`                          | Deterministic CSV fixtures loaded into the local database at startup.              |
-| `test/bootstrap.test.ts`            | TypeScript tests using `cds.test` and Vitest.                                      |
-| `test/domain-model.test.ts`         | Model compilation and SQLite persistence tests.                                    |
-| `test/seed-data.test.ts`            | Seed loading, relationship consistency, and demo-volume tests.                     |
-| `test/service.test.ts`              | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
-| `test/lifecycle.test.ts`            | Focused creation, update, assignment, default, and draft integrity tests.          |
-| `test/notification-service.test.ts` | Welcome-message and SMTP configuration tests without external delivery.            |
-| `vitest.config.mts`                 | Vitest setup and serial test-file execution for the shared CAP test server.        |
-| `tsconfig.json`                     | Strict TypeScript settings, CAP type resolution, and source maps.                  |
-| `.vscode/launch.json`               | Debug configurations for the server and tests.                                     |
-| `.vscode/tasks.json`                | Type-checking and MailHog lifecycle tasks for debugging.                           |
-| `compose.yaml`                      | Local MailHog container.                                                           |
+| File or directory                     | Purpose                                                                            |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| `package.json`                        | Runtime and development dependencies, commands, and CAP configuration profiles.    |
+| `package-lock.json`                   | Resolved dependency versions for reproducible installs with `npm ci`.              |
+| `srv/galactic-service.cds`            | The protected OData service with draft-enabled Spacefarers and read-only catalogs. |
+| `srv/galactic-service.ts`             | Small service entry point that registers the Spacefarer lifecycle handlers.        |
+| `srv/lifecycle/`                      | Trusted-planet, active-record, assignment, and shared-type modules.                |
+| `srv/services/`                       | Configurable SMTP notification boundary and welcome-message construction.          |
+| `db/schema.cds`                       | The persistence model for Spacefarers and the shared catalogs.                     |
+| `db/data/`                            | Deterministic CSV fixtures loaded into the local database at startup.              |
+| `test/bootstrap.test.ts`              | TypeScript tests using `cds.test` and Vitest.                                      |
+| `test/domain-model.test.ts`           | Model compilation and SQLite persistence tests.                                    |
+| `test/seed-data.test.ts`              | Seed loading, relationship consistency, and demo-volume tests.                     |
+| `test/service.test.ts`                | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
+| `test/lifecycle.test.ts`              | Focused creation, update, assignment, default, and draft integrity tests.          |
+| `test/notification-service.test.ts`   | Welcome-message and SMTP configuration tests without external delivery.            |
+| `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |
+| `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
+| `tsconfig.json`                       | Strict TypeScript settings, CAP type resolution, and source maps.                  |
+| `.vscode/launch.json`                 | Debug configurations for the server and tests.                                     |
+| `.vscode/tasks.json`                  | Type-checking and MailHog lifecycle tasks for debugging.                           |
+| `compose.yaml`                        | Local MailHog container.                                                           |
 
 ## Design and Future Work
 

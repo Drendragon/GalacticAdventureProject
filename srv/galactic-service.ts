@@ -2,6 +2,8 @@ import cds from "@sap/cds";
 
 import { prepareActiveCreate, validateActiveUpdate, validateDraftPlanetUpdate } from "./lifecycle/active-record-validation";
 import { applyTrustedPlanet } from "./lifecycle/planet-policy";
+import { scheduleWelcomeNotification } from "./lifecycle/welcome-notification";
+import type { WelcomeEmailRecipient } from "./services/notification-service";
 
 export default class GalacticService extends cds.ApplicationService {
   async init(): Promise<void> {
@@ -14,6 +16,9 @@ export default class GalacticService extends cds.ApplicationService {
     this.before("PATCH", SpacefarerDrafts, validateDraftPlanetUpdate);
     this.before("CREATE", Spacefarers, prepareActiveCreate);
     this.before("UPDATE", Spacefarers, validateActiveUpdate);
+    this.after("CREATE", Spacefarers, (_result, request) => {
+      scheduleWelcomeNotification(request.data as WelcomeEmailRecipient, request);
+    });
 
     return super.init();
   }

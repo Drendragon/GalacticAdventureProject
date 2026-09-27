@@ -207,3 +207,29 @@ Verification:
 - `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
 - CodeScene: both new TypeScript files score 10.0; the pre-commit safeguard passed with 2 eligible files checked and no issues across 7 modified files.
 - Independent read-only review found no critical or important issues and confirmed Phase 6 is ready for review. It suggested minor test hardening for every default transport option, a custom sender, and rejected delivery; these can be added with the broader notification coverage in Phase 10.
+
+## Phase 7 — After CREATE Handler
+
+Status: implemented; stopped for the user's Phase 7 review. Phase 8 has not started.
+
+Added the notification lifecycle integration:
+
+- Active `CREATE` registers a `request.on("succeeded")` callback from the required CAP `after CREATE` event.
+- The callback sends the validated candidate through the Phase 6 notification boundary only after the transaction commits.
+- Delivery failures are caught and logged inside the success callback, preserving the committed record and successful API response.
+- New draft activation sends one welcome message. Draft creation, editing an existing active record through a draft, active updates, and failed validation do not send one.
+- Routine tests load CAP's CommonJS notification module through a dedicated test helper and replace its boundary with a Vitest spy, preventing accidental SMTP traffic across every CAP test file.
+
+Ruling: use `request.data` as the notification payload. CAP's generic draft-enabled `after CREATE` handler supplies an affected-row collection as its result, while `request.data` contains the candidate enriched and validated by the `before CREATE` handler.
+
+Ruling: isolate the mixed-loader concern in `test/notification-test-double.ts`. Vitest's module runner and CAP's TypeScript CommonJS loader otherwise instantiate the module through separate caches, causing an ESM-side spy to miss CAP's instance and attempt real SMTP delivery.
+
+TDD evidence: the lifecycle suite first failed because the shared notification boundary did not exist. The initial handler then exposed the mixed-loader duplicate instance through real `ECONNREFUSED` attempts and showed CAP's collection-shaped result. Spying on CAP's CommonJS instance and using validated request data made all six focused lifecycle cases pass.
+
+Verification:
+
+- A real authenticated OData `POST` committed a new active Spacefarer and MailHog captured exactly one welcome message for that candidate through the Phase 7 handler.
+- The focused notification lifecycle suite passed all 6 cases; the complete suite passed 87 tests across 7 files.
+- `npm run typecheck`, `npm run format:check`, `docker compose config --quiet`, and `git diff --check`: passed.
+- CodeScene: all scoreable touched application and test files retain 10.0; the pre-commit safeguard passed with 6 eligible files checked and no issues across 8 modified files.
+- Independent read-only review found no critical or important issues and confirmed the transaction callback follows CAP's root commit semantics. It deferred changeset rollback and explicit active-PATCH coverage to Phase 10, along with making the logger-spy teardown resilient to a failed assertion.
