@@ -434,3 +434,27 @@ Verification:
 - `npm test`: 155 tests passed across 13 files, including 15 focused user-experience and language cases plus the served-metadata binding regression.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
 - CodeScene scores the user-experience and bootstrap tests at 10.0; the pre-commit safeguard passed with no issues across all five eligible changed TypeScript files.
+
+## Phase 17 — Error Handling
+
+Status: implemented; stopped for the user's Phase 17 review. The final README phase has not started.
+
+Refined business validation for Fiori-compatible error presentation:
+
+- Required strings and numeric ranges now use CAP's declarative `@mandatory` and `@assert.range` constraints in a dedicated service-constraints model; association existence remains covered by the existing `@assert.target` declarations.
+- Declarative failures use CAP's standard `ASSERT_MANDATORY` and `ASSERT_RANGE` codes and automatically receive human-readable messages, numeric severity, and affected-property targets.
+- TypeScript validation is limited to rules that depend on authentication context or persisted related data, plus explicit null rejection for numeric fields whose CDS defaults must continue to apply when omitted.
+- Stardust, navigation-skill, origin-planet, required-field, department, and position messages no longer expose camelCase implementation names.
+- The assignment examples are returned verbatim: **Stardust collection cannot be negative.**, **Navigation skill must be between 0 and 100.**, and **Origin planet must match your assigned planet.**
+- Explicit null numeric values receive distinct required-value messages, while declarative range constraints handle out-of-range values.
+- Department and Position errors target their generated foreign-key fields so Fiori can associate them with the value-help controls.
+- Draft activation returns the same targeted error contract as direct active creation, preserving CAP's standard draft correction flow.
+- Arbitrary JavaScript exceptions remain limited to startup invariants and notification-service configuration, not expected user validation failures.
+
+TDD evidence: five direct OData cases initially failed because messages exposed technical property names or omitted final punctuation. A model-contract test then failed until the service declared its validation annotations. Focused lifecycle and Fiori tests verified the migration to CAP's standard validation codes and targets, including draft activation and post-failure draft recovery.
+
+Verification:
+
+- `npm test`: 163 tests passed across 14 files, including 7 focused Fiori error-contract cases and the declarative service-constraint contract.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, Compose validation, and `git diff --check` passed.
+- CodeScene scores both refactored validation modules and both directly affected test files at 10.0; the pre-commit safeguard passed with no issues across all six eligible files in the nine-file Phase 17 change set.

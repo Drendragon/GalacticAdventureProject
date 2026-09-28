@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 16 adds metadata-driven user-experience polish. Entities and user-facing properties use the Fiori resource bundle, English is the default for application and framework text, and Email carries standard email semantics. The existing List Report, Object Page, draft create flow, and planet isolation remain framework-driven. There is no administrator or cross-planet bypass.
+Phase 17 provides Fiori-compatible validation errors. Required fields, numeric ranges, and association targets use CAP's declarative CDS constraints, which produce standard OData codes and affected-property targets for Fiori. TypeScript remains responsible for authenticated-planet policy, explicit nulls on defaulted numeric fields, and department/position consistency. There is no administrator or cross-planet bypass.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -41,6 +41,8 @@ The model uses UUID keys. `Spacefarers` also use CAP's managed audit fields. Req
 The demo data contains six Earth and six Mars Spacefarers, so each configured user has more than one five-row page. Europa, Titan, Kepler-186f, and Proxima Centauri b remain invisible to the Earth and Mars users and provide additional isolation fixtures. The fixtures include unassigned Spacefarers, department-only assignments, and matching department/position assignments. CAP loads these rows during database initialization, outside service `CREATE` events, so seed loading does not send welcome emails.
 
 `Spacefarers` is draft-enabled. CAP's generic OData handlers support draft creation, editing, activation, and discard, as well as direct active `POST`, `GET`, `PATCH`, and `DELETE` requests. The TypeScript handler derives `originPlanet` from the authenticated user, prevents reassignment, applies numeric defaults only on creation, and validates active creation and updates. New drafts receive the trusted planet immediately, while incomplete business fields remain editable until activation. The shared `Departments` and `Positions` catalogs allow reads and reject writes.
+
+Validation failures use structured OData errors. CAP's `@mandatory`, `@assert.range`, and `@assert.target` constraints handle ordinary input validation and supply standard codes such as `ASSERT_MANDATORY` and `ASSERT_RANGE`. Messages use field names intended for people, such as **Stardust collection cannot be negative.**, **Navigation skill must be between 0 and 100.**, and **Origin planet must match your assigned planet.** Each editable-field error includes its OData property target, allowing Fiori to present the message in context. Draft activation returns the same structure and leaves the draft available for correction.
 
 ## TypeScript
 
@@ -180,7 +182,7 @@ Invoke-RestMethod -Uri "$api/$draftKey" -Method Delete -Headers $earth
 Invoke-RestMethod -Uri "$api/$activeKey" -Method Delete -Headers $earth
 ```
 
-Invalid input returns an OData error object containing `error.code`, `error.message`, and, when applicable, `error.target`. For example, this request returns HTTP 400 with `stardustCollection` as its target:
+Invalid input returns an OData error object containing `error.code`, `error.message`, and, when applicable, `error.target`. For example, this request returns HTTP 400 with **Stardust collection cannot be negative.** as its message and `stardustCollection` as its target:
 
 ```powershell
 try {
@@ -201,7 +203,7 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Planet-isolation coverage verifies collections, counts, direct records, mutations, drafts, active and draft navigations, generated draft metadata, shared catalogs, missing attributes, and OData batches. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
+The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Planet-isolation coverage verifies collections, counts, direct records, mutations, drafts, active and draft navigations, generated draft metadata, shared catalogs, missing attributes, and OData batches. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Fiori error coverage verifies exact user-facing messages, OData codes, property targets, severity, draft activation, and correction after a rejected save. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
 
 Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
 
@@ -212,6 +214,7 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `package.json`                        | Runtime and development dependencies, commands, and CAP configuration profiles.    |
 | `package-lock.json`                   | Resolved dependency versions for reproducible installs with `npm ci`.              |
 | `srv/galactic-service.cds`            | The protected OData service with draft-enabled Spacefarers and read-only catalogs. |
+| `srv/galactic-constraints.cds`        | Declarative required-field and numeric-range validation with readable messages.    |
 | `srv/galactic-service.ts`             | Small service entry point that registers the Spacefarer lifecycle handlers.        |
 | `srv/lifecycle/`                      | Trusted-planet, active-record, assignment, and shared-type modules.                |
 | `srv/services/`                       | Configurable SMTP notification boundary and welcome-message construction.          |
@@ -228,6 +231,7 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |
 | `test/fiori-create-flow.test.ts`      | Draft-enabled and insertable metadata contracts used by the Fiori Create action.   |
 | `test/fiori-user-experience.test.ts`  | Human-readable entity/property labels and email semantic behavior.                 |
+| `test/fiori-error-handling.test.ts`   | Structured messages, field targets, and rejected-draft recovery for Fiori.         |
 | `test/mailhog.integration.test.ts`    | Explicit real-SMTP capture check, excluded from the routine test suite.            |
 | `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
 | `vitest.mailhog.config.mts`           | Isolated Vitest configuration for the opt-in MailHog integration check.            |

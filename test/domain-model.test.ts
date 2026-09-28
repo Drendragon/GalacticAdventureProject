@@ -72,6 +72,26 @@ describe("domain model", () => {
     expect(elements.wormholeNavigationSkill["@assert.range"]).toEqual([0, 100]);
   });
 
+  it("declares user-facing service validation in CDS", async () => {
+    const model = await cds.load("*");
+    const elements = model.definitions?.["GalacticService.Spacefarers"].elements ?? {};
+
+    expect(elements.firstName).toMatchObject({
+      "@mandatory": true,
+      "@mandatory.message": "First name is required.",
+    });
+    expect(elements.lastName).toMatchObject({
+      "@mandatory": true,
+      "@mandatory.message": "Last name is required.",
+    });
+    expect(elements.email).toMatchObject({
+      "@mandatory": true,
+      "@mandatory.message": "Email is required.",
+    });
+    expect(elements.stardustCollection["@assert.range.message"]).toBe("Stardust collection cannot be negative.");
+    expect(elements.wormholeNavigationSkill["@assert.range.message"]).toBe("Navigation skill must be between 0 and 100.");
+  });
+
   it.each(["stardustCollection", "wormholeNavigationSkill"])("rejects an explicit null for %s", async (numericField) => {
     const { Spacefarers } = cds.entities("galactic.spacefarers");
     const candidate = validSpacefarer({ [numericField]: null });

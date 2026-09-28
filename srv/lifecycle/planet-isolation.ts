@@ -35,7 +35,7 @@ function isSpacefarerNavigation(path: string): boolean {
 
 function requiredNavigationSource(request: SpacefarerRequest): RestrictedNavigationSource {
   const source = (request.query as NavigationQuery).SELECT?.from?.ref?.[0];
-  if (typeof source === "string" || !source?.where) request.reject(403, "Spacefarer navigation requires an authorized source");
+  if (typeof source === "string" || !source?.where) request.reject(403, "Spacefarer navigation requires an authorized source.");
   return { id: source.id, where: source.where };
 }
 
