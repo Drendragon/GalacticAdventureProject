@@ -4,7 +4,7 @@ A local SAP CAP Node.js application written in TypeScript for the Galactic Space
 
 ## Current Phase
 
-Phase 14 defines the metadata-driven Spacefarer Object Page. It groups general information and spacefaring statistics into sections, supports draft editing, keeps the backend-assigned origin planet read-only, and retains value help for Department and Position. Fiori creation remains the next phase. There is no administrator or cross-planet bypass.
+Phase 16 adds metadata-driven user-experience polish. Entities and user-facing properties use the Fiori resource bundle, English is the default for application and framework text, and Email carries standard email semantics. The existing List Report, Object Page, draft create flow, and planet isolation remain framework-driven. There is no administrator or cross-planet bypass.
 
 Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
 
@@ -25,6 +25,12 @@ npm run watch-spacefarer
 ```
 
 Open the [Spacefarer application](http://localhost:4004/spacefarers/index.html) or the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The application and endpoints require one of the configured demo users.
+
+In the Spacefarer application, choose **Create**, complete the required First Name, Last Name, and Email fields, and choose **Create** on the draft page to save it. Origin Planet is filled by the backend from the signed-in user's identity. When MailHog is running, the saved record appears in the list and its welcome message appears in the MailHog inbox.
+
+Fiori derives filter, form, and generated-control labels from the service metadata, including **Origin Planet**, **Stardust Collection**, **Wormhole Navigation Skill**, and **Spacesuit Color**. These annotations use `{@i18n>key}` bindings to the generated app's `@i18n` model and resolve values from `app/spacefarer/webapp/i18n/i18n.properties`, whose root bundle contains the English text. The leading `@` is significant: `{i18n>key}` is CAP's server-side placeholder syntax and cannot resolve this frontend-only bundle. The UI5 bootstrap also defaults to English so standard Fiori buttons and messages do not inherit a different browser language. The Email property uses Fiori's standard email-address semantic behavior.
+
+A future Hungarian translation can be added as `i18n_hu.properties`. At that point, add `hu` to the manifest's supported locales and provide the desired locale-selection mechanism; the CDS annotations will continue using the same resource keys.
 
 `npm start` runs `cds serve` without watching files. `npm run watch` runs `cds watch`, which restarts the server when project files change. CAP detects `tsconfig.json` and loads TypeScript through the locally installed `tsx` runner. Stop either command with Ctrl+C.
 
@@ -220,6 +226,8 @@ Formatting covers supported source, configuration, and documentation files. Plai
 | `test/lifecycle.test.ts`              | Focused creation, update, assignment, default, and draft integrity tests.          |
 | `test/notification-service.test.ts`   | Welcome-message and SMTP configuration tests without external delivery.            |
 | `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |
+| `test/fiori-create-flow.test.ts`      | Draft-enabled and insertable metadata contracts used by the Fiori Create action.   |
+| `test/fiori-user-experience.test.ts`  | Human-readable entity/property labels and email semantic behavior.                 |
 | `test/mailhog.integration.test.ts`    | Explicit real-SMTP capture check, excluded from the routine test suite.            |
 | `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
 | `vitest.mailhog.config.mts`           | Isolated Vitest configuration for the opt-in MailHog integration check.            |

@@ -390,3 +390,47 @@ Verification:
 - `npm test`: 137 tests passed across 11 files. The strict planet-conflict and reassignment cases pass with the UI-only field control.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
 - CodeScene scores the new Object Page test at 10.0; the pre-commit safeguard passed with no issues.
+
+## Phase 15 — Fiori Create Flow
+
+Status: implemented; stopped for the user's Phase 15 review. User-experience label polish has not started.
+
+Enabled and verified Spacefarer creation through the standard Fiori elements draft flow:
+
+- `GalacticService.Spacefarers` remains draft-enabled and insertable, which makes Fiori elements provide its standard Create action without a custom controller or extension.
+- Create starts an incomplete draft, allowing the user to enter the Object Page fields before active-record validation runs.
+- Saving activates the draft through CAP's generic handler, invokes the existing trusted-planet and validation lifecycle, commits the active record, and triggers the existing post-commit welcome notification.
+- Origin Planet remains read-only in the UI and is populated from the authenticated user's planet by the backend.
+- Focused metadata tests independently protect the draft-enabled and insertable contracts that expose the Create action.
+- The README now describes the browser create flow and its observable MailHog result.
+
+Live verification used the same OData sequence as the Fiori application: the application endpoint returned HTTP 200, an empty draft was created, the draft was patched with all form values, activation produced an active Earth Spacefarer with the patched statistics, and MailHog captured the expected welcome message. The created active record was deleted after verification. The temporary CAP server was stopped, while the pre-existing MailHog container was left running.
+
+Verification:
+
+- `npm test`: 139 tests passed across 12 files, including the 2 focused create-flow metadata cases.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
+- CodeScene scores the new create-flow test at 10.0; the pre-commit safeguard passed with no issues.
+
+## Phase 16 — User Experience Polish
+
+Status: implemented; stopped for the user's Phase 16 review. Structured Fiori error presentation has not started.
+
+Added reusable, metadata-driven labels and basic semantic behavior:
+
+- Spacefarers, Departments, and Positions have localized entity-title bindings.
+- Every user-facing Spacefarer property uses a resource-bundle title, including Origin Planet, Stardust Collection, Wormhole Navigation Skill, and Spacesuit Color.
+- Department and Position association titles propagate to their generated foreign-key properties, giving the filters and value-help controls readable labels.
+- Email carries `Communication.IsEmailAddress`, allowing Fiori to apply its standard email-address behavior.
+- List Report columns, Object Page fields and sections, header type names, property titles, and catalog titles all reference the frontend `i18n.properties` bundle instead of embedding English text in CDS.
+- The root resource bundle supplies English, and the UI5 bootstrap sets English as the default runtime language so SAP-provided Fiori text is English as well.
+- A later Hungarian bundle can reuse the same annotation keys without modifying the page definitions.
+- No custom styling, controller, or Fiori extension was introduced.
+
+TDD evidence: the original focused cases failed because the entities and properties had no reusable titles and Email had no semantic annotation. The localization refinement then produced 18 expected failures while annotations still contained literal English and UI5 still inherited the browser locale. The first binding form used CAP's `{i18n>key}` syntax; live metadata verification showed CAP consuming those placeholders and emitting untranslated keys because the bundle belongs to the frontend. The corrected `{@i18n>key}` form targets UI5's hard-coded `@i18n` annotation model and survives the CAP metadata response. A dedicated HTTP metadata regression test now protects that boundary. Full-project EDMX compilation confirms the generated association-key bindings and the email-address semantic term.
+
+Verification:
+
+- `npm test`: 155 tests passed across 13 files, including 15 focused user-experience and language cases plus the served-metadata binding regression.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, and `git diff --check` passed.
+- CodeScene scores the user-experience and bootstrap tests at 10.0; the pre-commit safeguard passed with no issues across all five eligible changed TypeScript files.

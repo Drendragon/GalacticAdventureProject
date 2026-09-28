@@ -2,8 +2,8 @@ using GalacticService as service from '../../srv/galactic-service';
 
 annotate service.Spacefarers with @(
   UI.HeaderInfo: {
-    TypeName      : 'Spacefarer',
-    TypeNamePlural: 'Spacefarers',
+    TypeName      : '{@i18n>spacefarer}',
+    TypeNamePlural: '{@i18n>spacefarers}',
     Title         : {
       $Type: 'UI.DataField',
       Value: name
@@ -18,39 +18,39 @@ annotate service.Spacefarers with @(
   UI.LineItem: [
     {
       $Type: 'UI.DataField',
-      Label: 'Name',
+      Label: '{@i18n>name}',
       Value: name,
       ![@UI.Importance]: #High
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Origin Planet',
+      Label: '{@i18n>originPlanet}',
       Value: originPlanet,
       ![@UI.Importance]: #High
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Department',
+      Label: '{@i18n>department}',
       Value: department.name
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Position',
+      Label: '{@i18n>position}',
       Value: position.name
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Stardust Collection',
+      Label: '{@i18n>stardustCollection}',
       Value: stardustCollection
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Wormhole Navigation Skill',
+      Label: '{@i18n>wormholeNavigationSkill}',
       Value: wormholeNavigationSkill
     },
     {
       $Type: 'UI.DataField',
-      Label: 'Spacesuit Color',
+      Label: '{@i18n>spacesuitColor}',
       Value: spacesuitColor
     }
   ],
@@ -58,32 +58,32 @@ annotate service.Spacefarers with @(
     Data: [
       {
         $Type: 'UI.DataField',
-        Label: 'First Name',
+        Label: '{@i18n>firstName}',
         Value: firstName
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Last Name',
+        Label: '{@i18n>lastName}',
         Value: lastName
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Email',
+        Label: '{@i18n>email}',
         Value: email
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Origin Planet',
+        Label: '{@i18n>originPlanet}',
         Value: originPlanet
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Department',
+        Label: '{@i18n>department}',
         Value: department_ID
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Position',
+        Label: '{@i18n>position}',
         Value: position_ID
       }
     ]
@@ -92,17 +92,17 @@ annotate service.Spacefarers with @(
     Data: [
       {
         $Type: 'UI.DataField',
-        Label: 'Stardust Collection',
+        Label: '{@i18n>stardustCollection}',
         Value: stardustCollection
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Wormhole Navigation Skill',
+        Label: '{@i18n>wormholeNavigationSkill}',
         Value: wormholeNavigationSkill
       },
       {
         $Type: 'UI.DataField',
-        Label: 'Spacesuit Color',
+        Label: '{@i18n>spacesuitColor}',
         Value: spacesuitColor
       }
     ]
@@ -110,29 +110,36 @@ annotate service.Spacefarers with @(
   UI.Facets: [
     {
       $Type: 'UI.ReferenceFacet',
-      Label: 'General Information',
+      Label: '{@i18n>generalInformation}',
       Target: '@UI.FieldGroup#GeneralInformation'
     },
     {
       $Type: 'UI.ReferenceFacet',
-      Label: 'Spacefaring Statistics',
+      Label: '{@i18n>spacefaringStatistics}',
       Target: '@UI.FieldGroup#SpacefaringStatistics'
     }
   ]
 );
 
-annotate service.Spacefarers with {
-  originPlanet @UI.FieldControl: #ReadOnly;
-  department @Common.Text: department.name;
-  position   @Common.Text: position.name;
+annotate service.Spacefarers with @title: '{@i18n>spacefarer}' {
+  firstName               @title: '{@i18n>firstName}';
+  lastName                @title: '{@i18n>lastName}';
+  name                    @title: '{@i18n>name}';
+  email                   @title: '{@i18n>email}' @Communication.IsEmailAddress;
+  originPlanet            @title: '{@i18n>originPlanet}' @UI.FieldControl: #ReadOnly;
+  department              @title: '{@i18n>department}' @Common.Text: department.name;
+  position                @title: '{@i18n>position}' @Common.Text: position.name;
+  stardustCollection      @title: '{@i18n>stardustCollection}';
+  wormholeNavigationSkill @title: '{@i18n>wormholeNavigationSkill}';
+  spacesuitColor          @title: '{@i18n>spacesuitColor}';
 };
 
-annotate service.Departments with {
+annotate service.Departments with @title: '{@i18n>department}' {
   ID   @Common.Text: name;
-  name @title      : 'Department';
+  name @title      : '{@i18n>department}';
 };
 
-annotate service.Positions with {
+annotate service.Positions with @title: '{@i18n>position}' {
   ID   @Common.Text: name;
-  name @title      : 'Position';
+  name @title      : '{@i18n>position}';
 };

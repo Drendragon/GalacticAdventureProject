@@ -23,4 +23,12 @@ describe("CAP bootstrap", () => {
     expect(status).toBe(200);
     expect(data).toMatch(/GalacticService/);
   });
+
+  it("preserves frontend translation bindings in OData metadata", async () => {
+    const { data } = await GET("/odata/v4/galactic/$metadata", {
+      auth: { username: "earth-user", password: "earth-demo" },
+    });
+
+    expect(data).toContain('PropertyValue Property="Label" String="{@i18n>name}"');
+  });
 });

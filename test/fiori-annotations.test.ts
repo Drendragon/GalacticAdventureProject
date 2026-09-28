@@ -24,13 +24,13 @@ describe("Fiori List Report annotations", () => {
     const lineItems = spacefarers["@UI.LineItem"] as AnnotationRecord[];
 
     expect(lineItems.map(({ Label }) => Label)).toEqual([
-      "Name",
-      "Origin Planet",
-      "Department",
-      "Position",
-      "Stardust Collection",
-      "Wormhole Navigation Skill",
-      "Spacesuit Color",
+      "{@i18n>name}",
+      "{@i18n>originPlanet}",
+      "{@i18n>department}",
+      "{@i18n>position}",
+      "{@i18n>stardustCollection}",
+      "{@i18n>wormholeNavigationSkill}",
+      "{@i18n>spacesuitColor}",
     ]);
   });
 
