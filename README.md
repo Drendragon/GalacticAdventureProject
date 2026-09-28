@@ -157,7 +157,7 @@ There is no administrator role, cross-planet bypass, or planet-reassignment API.
 
 ## Fiori Behavior
 
-The List Report displays the required stardust and spacesuit fields along with identity, planet, navigation skill, department, and position. Fiori and OData provide filtering, sorting, count handling, and server-side paging.
+The List Report displays the required stardust and spacesuit fields along with identity, planet, navigation skill, department, and position. Fiori and OData provide filtering, sorting, count handling, and server-side paging. The responsive table uses an explicit five-row loading threshold, so the six Earth and six Mars fixtures expose the growing-table behavior for either demo user.
 
 Selecting a row opens the Object Page. Draft support enables create, edit, activate, and discard flows. Users can edit the spacefaring statistics requested by the assignment, while Origin Planet remains read-only and server-controlled.
 

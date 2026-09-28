@@ -356,9 +356,9 @@ Added metadata-driven List Report behavior for `GalacticService.Spacefarers`:
 - `UI.HeaderInfo` supplies the Spacefarer title used when navigating from a row to the existing Object Page route.
 - Focused model tests verify the calculated name, exact columns, selection fields, and association value-help metadata.
 
-Sorting, filtering, and pagination remain generic OData/Fiori elements behavior; no freestyle controller or custom table implementation was added.
+Sorting, filtering, and pagination remain generic OData/Fiori elements behavior; no freestyle controller or custom table implementation was added. The responsive table uses an explicit five-row loading threshold so each six-row Earth and Mars fixture set exposes the growing-table paging behavior.
 
-TDD evidence: the focused annotation tests first failed because the service exposed neither a calculated name nor the required UI annotations. Department and Position value-help tests then failed until the catalog projections and association text paths were annotated.
+TDD evidence: the focused annotation tests first failed because the service exposed neither a calculated name nor the required UI annotations. Department and Position value-help tests then failed until the catalog projections and association text paths were annotated. During final demo review, a manifest test observed no explicit paging threshold before the five-row threshold was configured.
 
 Verification:
 
@@ -455,7 +455,7 @@ TDD evidence: five direct OData cases initially failed because messages exposed 
 
 Verification:
 
-- `npm test`: 163 tests passed across 14 files, including 7 focused Fiori error-contract cases and the declarative service-constraint contract.
+- `npm test`: 164 tests passed across 14 files, including 8 focused Fiori annotation and error-contract cases and the declarative service-constraint contract.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, Compose validation, and `git diff --check` passed.
 - CodeScene scores both refactored validation modules and both directly affected test files at 10.0; the pre-commit safeguard passed with no issues across all six eligible files in the nine-file Phase 17 change set.
 
@@ -474,6 +474,6 @@ Reworked the accumulated development documentation into a finished interview sub
 
 Verification:
 
-- `npm test`: 163 tests passed across 14 files.
+- `npm test`: 164 tests passed across 14 files.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, Compose validation, and `git diff --check` passed.
 - The CodeScene pre-commit safeguard found no eligible source-code changes in this documentation-only phase.

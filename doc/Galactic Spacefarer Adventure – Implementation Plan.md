@@ -798,6 +798,8 @@ Spacesuit Color
 
 Use CDS/Fiori annotations rather than manually implementing table behavior.
 
+Set the responsive table loading threshold to five rows so the six visible Earth and Mars fixtures demonstrate the growing-table paging behavior without adding artificial records.
+
 Relevant annotation concepts may include:
 
 ```text
@@ -973,46 +975,7 @@ Remove phase status and repository-working instructions from the final README. K
 
 ---
 
-# 22. Phase 19 – Git Hygiene
-
-Use meaningful commits.
-
-Suggested sequence:
-
-```text
-chore: initialize CAP project
-
-feat: add spacefarer domain model
-
-feat: expose galactic OData service
-
-feat: add spacefarer create validation
-
-feat: add welcome notification
-
-feat: add role and planet authorization
-
-test: cover spacefarer service
-
-feat: add Fiori list report
-
-feat: add Fiori object page
-
-docs: add setup and architecture documentation
-```
-
-Do not commit:
-
-```text
-node_modules
-SQLite transient files
-local secrets
-generated temporary files
-```
-
----
-
-# 23. Phase 20 – Final Demo Scenario
+# 22. Phase 19 – Final Demo Scenario
 
 The completed project should support this demo:
 
@@ -1101,7 +1064,7 @@ the backend rejects the request
 
 ---
 
-# 24. Non-Goals
+# 23. Non-Goals
 
 Do not add these unless absolutely required:
 
@@ -1125,7 +1088,7 @@ The goal is to demonstrate correct SAP CAP and Fiori usage, not architectural co
 
 ---
 
-# 25. Coding Guidelines
+# 24. Coding Guidelines
 
 Use TypeScript with strict type checking, compatible with the selected CAP Node.js version. Handwritten executable code and tests use `.ts` files.
 
@@ -1152,7 +1115,7 @@ unnecessary framework abstractions
 
 ---
 
-# 26. Definition of Done
+# 25. Definition of Done
 
 The project is complete when:
 

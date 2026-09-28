@@ -1,7 +1,25 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import cds from "@sap/cds";
 import { describe, expect, it } from "vitest";
 
 type AnnotationRecord = Record<string, unknown>;
+type FioriManifest = {
+  "sap.ui5": {
+    routing: {
+      targets: {
+        SpacefarersList: {
+          options: {
+            settings: {
+              controlConfiguration: Record<string, { tableSettings: { threshold?: number } }>;
+            };
+          };
+        };
+      };
+    };
+  };
+};
 
 const spacefarerDefinition = async (): Promise<AnnotationRecord> => {
   const model = await cds.load("*");
@@ -9,6 +27,15 @@ const spacefarerDefinition = async (): Promise<AnnotationRecord> => {
 };
 
 describe("Fiori List Report annotations", () => {
+  it("configures a five-row List Report loading threshold", async () => {
+    const source = await readFile(path.join(__dirname, "../app/spacefarer/webapp/manifest.json"), "utf8");
+    const manifest = JSON.parse(source) as FioriManifest;
+    const lineItem =
+      manifest["sap.ui5"].routing.targets.SpacefarersList.options.settings.controlConfiguration["@com.sap.vocabularies.UI.v1.LineItem"];
+
+    expect(lineItem.tableSettings.threshold).toBe(5);
+  });
+
   it("exposes a calculated full name", async () => {
     const spacefarers = await spacefarerDefinition();
     const elements = spacefarers.elements as Record<string, AnnotationRecord>;
