@@ -121,10 +121,10 @@ npm run watch
 npm test
 ```
 
-The development application should run using:
+The backend development server should run through the project-local CLI:
 
-```bash
-cds watch
+```powershell
+npm run watch
 ```
 
 ## Acceptance Criteria
@@ -937,109 +937,39 @@ Do not throw arbitrary unstructured JavaScript exceptions for normal validation 
 
 # 21. Phase 18 – README
 
-Create a strong README.
+Rewrite the accumulated development README as a concise interview submission. Lead with assignment coverage and the shortest path to a running Fiori application rather than implementation history.
+
+Document the supported startup paths:
+
+```powershell
+npm ci
+npm run watch-spacefarer
+```
+
+MailHog remains optional for the application and routine test suite:
+
+```powershell
+docker compose up -d mailhog
+npm run watch-spacefarer
+```
+
+The CAP CLI is project-local; do not require a global installation. Also document the integrated **CAP: Debug + MailHog** VS Code profile.
 
 Include:
 
-## Project overview
+- a requirement-to-implementation overview
+- prerequisites and demo credentials, clearly marked as development fixtures
+- CAP, OData, Fiori, SQLite, and SMTP architecture
+- CDS validation and focused TypeScript business-policy boundaries
+- the before-create, database, after-create, commit, and notification lifecycle
+- authentication, role authorization, planet isolation, navigation protection, and draft ownership
+- List Report filtering, sorting, paging, and Object Page editing
+- routine checks and the opt-in MailHog integration test
+- key project paths and design assumptions
+- future government-level reports and controlled planet reassignment without adding an administrator now
+- future JWT identity integration, durable notifications, container deployment, and optional PostgreSQL support
 
-Explain the Galactic Spacefarer exercise.
-
-## Architecture
-
-Include:
-
-```text
-Fiori Elements
-      ↓
-OData V4
-      ↓
-SAP CAP Node.js
-      ↓
-SQLite
-```
-
-## Prerequisites
-
-```text
-Node.js
-npm
-SAP CDS CLI
-SAP Fiori Tools
-```
-
-## Installation
-
-```bash
-npm install
-```
-
-## Start
-
-```bash
-cds watch
-```
-
-## Tests
-
-```bash
-npm test
-```
-
-## Demo users
-
-Document local users:
-
-```text
-earth-user
-mars-user
-```
-
-Do not expose real credentials or secrets.
-
-## Security model
-
-Explain:
-
-```text
-authentication
-role-based authorization
-planet-based row-level authorization
-```
-
-## CREATE lifecycle
-
-Explain:
-
-```text
-before CREATE
-    ↓
-validation/defaulting
-    ↓
-database insert
-    ↓
-after CREATE
-    ↓
-register success callback
-    ↓
-transaction commit
-    ↓
-SMTP welcome email
-```
-
-## Email implementation
-
-Explain SMTP delivery to MailHog, how to start it with Docker Compose, how to open its inbox, and how to configure the sender and transport. Explain that delivery failure does not undo creation and that this version has no durable retry mechanism.
-
-## Assumptions
-
-Document ambiguous requirements and chosen interpretations.
-
-## Future Galactic Administration
-
-Potential future features include galactic government reports across planets and controlled planet reassignment by a galactic administration role. They would need a separately designed authorization model. This version has no such role, API, or planet-isolation exception.
-
-Also document real identity-provider integration and durable notification delivery as future production work.
+Remove phase status and repository-working instructions from the final README. Keep implementation history in `doc/implementation-progress.md`.
 
 ---
 
@@ -1088,8 +1018,11 @@ The completed project should support this demo:
 
 ## 1. Start application
 
-```bash
-cds watch
+Start MailHog when demonstrating the notification, then start the Fiori application:
+
+```powershell
+docker compose up -d mailhog
+npm run watch-spacefarer
 ```
 
 ## 2. Open Fiori application
@@ -1133,6 +1066,7 @@ Verify:
 defaults are applied
 database entry exists
 notification is triggered
+MailHog captures the welcome email
 ```
 
 ## 7. Create invalid Spacefarer

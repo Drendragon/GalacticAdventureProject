@@ -1,198 +1,169 @@
 # Galactic Spacefarer Adventure
 
-A local SAP CAP Node.js application written in TypeScript for the Galactic Spacefarer interview exercise.
+A full-stack SAP CAP and Fiori elements implementation of the Galactic Spacefarer interview exercise. The application manages spacefarers, validates their journey statistics, isolates records by the authenticated user's planet, and sends a welcome email after a successful creation.
 
-## Current Phase
+## Assignment Coverage
 
-Phase 17 provides Fiori-compatible validation errors. Required fields, numeric ranges, and association targets use CAP's declarative CDS constraints, which produce standard OData codes and affected-property targets for Fiori. TypeScript remains responsible for authenticated-planet policy, explicit nulls on defaulted numeric fields, and department/position consistency. There is no administrator or cross-planet bypass.
+| Assignment area        | Implementation                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Spacefarer data model  | CDS entities for Spacefarers, Departments, and Positions with UUID keys, managed audit fields, defaults, ranges, and associations.                     |
+| Protected service      | OData V4 CRUD service protected by a role and planet-based instance restriction.                                                                       |
+| Before-create behavior | CAP declarative validation plus a TypeScript `before CREATE` handler for trusted planet assignment, numeric null handling, and assignment consistency. |
+| After-create behavior  | A TypeScript `after CREATE` handler registers a post-commit SMTP welcome notification.                                                                 |
+| List Report            | Fiori elements table with spacefarer identity, planet, assignment, stardust, navigation skill, and spacesuit color.                                    |
+| Object Page            | Draft-enabled details page where users can create and edit spacefarers within their planet.                                                            |
+| Local database         | In-memory SQLite with deterministic CSV fixtures for development and tests.                                                                            |
 
-Development proceeds one phase at a time on `master`, with a review after every phase. The repository owner handles commits and pushes.
+## Quick Start
 
-## Prerequisites
+Prerequisites:
 
-- Node.js 24.21.0 LTS and its bundled npm.
-- Docker Desktop with Linux containers for MailHog. CAP and the automated tests run without Docker.
+- Node.js 24.21.0 LTS with its bundled npm
+- Docker Desktop with Linux containers only when using MailHog
+- VS Code with the recommended SAP extensions when using the integrated debugger
 
-The CAP CLI is installed locally as a development dependency. Use the npm scripts below or `npx cds`; a global CLI installation is unnecessary.
+The CAP CLI is a project dependency. A global CDS installation is unnecessary.
 
-With NVM for Windows, select Node with `nvm use 24.21.0`. The `.nvmrc` records the same version for tools that support it.
-
-## Install and Run
+Install the locked dependencies and start the Fiori application:
 
 ```powershell
 npm ci
 npm run watch-spacefarer
 ```
 
-Open the [Spacefarer application](http://localhost:4004/spacefarers/index.html) or the [CAP landing page](http://localhost:4004). The service is available at `/odata/v4/galactic`, and its [`$metadata` endpoint](http://localhost:4004/odata/v4/galactic/$metadata) describes the Spacefarers, Departments, and Positions entity sets. The application and endpoints require one of the configured demo users.
+Open the [Spacefarer application](http://localhost:4004/spacefarers/index.html). The OData service is available at `http://localhost:4004/odata/v4/galactic`.
 
-In the Spacefarer application, choose **Create**, complete the required First Name, Last Name, and Email fields, and choose **Create** on the draft page to save it. Origin Planet is filled by the backend from the signed-in user's identity. When MailHog is running, the saved record appears in the list and its welcome message appears in the MailHog inbox.
+`npm run watch-spacefarer` restarts CAP after source changes and opens the application. Use `npm start` when file watching and automatic browser startup are unnecessary.
 
-Fiori derives filter, form, and generated-control labels from the service metadata, including **Origin Planet**, **Stardust Collection**, **Wormhole Navigation Skill**, and **Spacesuit Color**. These annotations use `{@i18n>key}` bindings to the generated app's `@i18n` model and resolve values from `app/spacefarer/webapp/i18n/i18n.properties`, whose root bundle contains the English text. The leading `@` is significant: `{i18n>key}` is CAP's server-side placeholder syntax and cannot resolve this frontend-only bundle. The UI5 bootstrap also defaults to English so standard Fiori buttons and messages do not inherit a different browser language. The Email property uses Fiori's standard email-address semantic behavior.
+SQLite runs in memory. CAP recreates the database and reloads the fixtures under `db/data` whenever the server restarts.
 
-A future Hungarian translation can be added as `i18n_hu.properties`. At that point, add `hu` to the manifest's supported locales and provide the desired locale-selection mechanism; the CDS annotations will continue using the same resource keys.
+## Start with MailHog
 
-`npm start` runs `cds serve` without watching files. `npm run watch` runs `cds watch`, which restarts the server when project files change. CAP detects `tsconfig.json` and loads TypeScript through the locally installed `tsx` runner. Stop either command with Ctrl+C.
-
-SQLite runs in memory for this local demo. CAP creates the three application tables from `db/schema.cds` and loads the CSV fixtures under `db/data` when the server starts. Data is reset to this seed state when the process restarts.
-
-The model uses UUID keys. `Spacefarers` also use CAP's managed audit fields. Required persisted values, numeric defaults, numeric ranges, and association targets are declared in CDS. A position must belong to a department, while a spacefarer's department and position are optional. The service handler validates that a selected position belongs to the selected department, including the resulting state of partial updates.
-
-The demo data contains six Earth and six Mars Spacefarers, so each configured user has more than one five-row page. Europa, Titan, Kepler-186f, and Proxima Centauri b remain invisible to the Earth and Mars users and provide additional isolation fixtures. The fixtures include unassigned Spacefarers, department-only assignments, and matching department/position assignments. CAP loads these rows during database initialization, outside service `CREATE` events, so seed loading does not send welcome emails.
-
-`Spacefarers` is draft-enabled. CAP's generic OData handlers support draft creation, editing, activation, and discard, as well as direct active `POST`, `GET`, `PATCH`, and `DELETE` requests. The TypeScript handler derives `originPlanet` from the authenticated user, prevents reassignment, applies numeric defaults only on creation, and validates active creation and updates. New drafts receive the trusted planet immediately, while incomplete business fields remain editable until activation. The shared `Departments` and `Positions` catalogs allow reads and reject writes.
-
-Validation failures use structured OData errors. CAP's `@mandatory`, `@assert.range`, and `@assert.target` constraints handle ordinary input validation and supply standard codes such as `ASSERT_MANDATORY` and `ASSERT_RANGE`. Messages use field names intended for people, such as **Stardust collection cannot be negative.**, **Navigation skill must be between 0 and 100.**, and **Origin planet must match your assigned planet.** Each editable-field error includes its OData property target, allowing Fiori to present the message in context. Draft activation returns the same structure and leaves the draft available for correction.
-
-## TypeScript
-
-Write application handlers, tests, and executable tooling in `.ts` files. CDS models remain `.cds` files. `tsconfig.json` enables strict type checking and source maps; `@cap-js/cds-types` provides CAP API types. CAP's standard `cds-typer` tooling generates model types as models are added. Generated `@cds-models/` files are ignored by Git and Prettier.
-
-`tsx` runs TypeScript without checking types, so run `npm run typecheck` as well as `npm test`. The root type-check command validates both the CAP backend and the Fiori application. `npm run lint:frontend` applies the Fiori tools ESLint rules, and `npm run build:frontend` creates the optimized UI5 bundle. Tests use Vitest's familiar `describe`, `it`, and `expect` API. `test/setup.ts` registers the same CommonJS `tsx` loader as the CAP CLI, enables TypeScript handler discovery, and disables UI5 middleware only for isolated backend test servers.
-
-These start commands are for local development. A future production deployment should compile TypeScript to JavaScript and run the built service.
-
-## Debug in VS Code
-
-Open **Run and Debug**, select a configuration, and press **F5**:
-
-| Configuration            | Behavior                                                                                                                                                                     |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CAP: Debug**           | Type-checks the project and starts the CAP server with the debugger attached. No Docker required.                                                                            |
-| **CAP: Debug + MailHog** | Type-checks, starts MailHog and CAP, then opens the Spacefarer application in a debug-enabled Chrome window. Stopping debugging also stops this project's MailHog container. |
-| **CAP: Debug tests**     | Type-checks and runs the TypeScript tests with debugging enabled.                                                                                                            |
-
-Set breakpoints in `.ts` files. The integrated MailHog profile opens the Fiori application directly after CAP reports that the server is ready. The server profiles run once; restart the debug session after editing handlers. Stop any existing `npm start` or `npm run watch` process first so port `4004` is available.
-
-The MailHog profile requires Docker Desktop to be running in Linux-container mode. It controls the same MailHog container as manual `docker compose` commands, including stopping it if it was already running. MailHog uses in-memory storage, so its inbox is cleared when restarted. If VS Code exits unexpectedly before teardown, run `docker compose stop mailhog` yourself. The debug tasks do not start or stop Docker Desktop.
-
-Install the workspace recommendations when VS Code offers them. They include SAP CDS language support and the SAP Fiori tools extension pack used to generate and maintain the UI application.
-
-## Demo Users
-
-The following credentials are public development fixtures, not production accounts:
-
-| Username          | Password               | Role             | Planet                   |
-| ----------------- | ---------------------- | ---------------- | ------------------------ |
-| `earth-user`      | `earth-demo`           | `SpacefarerUser` | Earth                    |
-| `earth-colleague` | `earth-colleague-demo` | `SpacefarerUser` | Earth                    |
-| `mars-user`       | `mars-demo`            | `SpacefarerUser` | Mars                     |
-| `planetless-user` | `planetless-demo`      | `SpacefarerUser` | None (negative fixture)  |
-| `roleless-user`   | `roleless-demo`        | None             | Earth (negative fixture) |
-
-The landing page is public; the OData service requires the role above. CAP's built-in `basic` authentication validates these fixed users without enabling its default sample users. Unknown usernames are rejected. Use separate private browser sessions when switching users because browsers cache Basic authentication credentials.
-
-These settings apply to development and tests. The production profile selects JWT authentication and requires future identity-provider configuration and dependencies; this repository is not a production deployment setup.
-
-The planetless identity proves that all Spacefarer operations require a valid planet attribute. The roleless identity proves that successful authentication does not grant access without `SpacefarerUser`. `earth-colleague` proves that two users can share Earth active records while drafts remain private to their owner. A CDS instance restriction filters active records, counts, expansions, mutations, and batch subrequests by `$user.planet`; CAP's draft ownership rules protect direct draft access. A source-navigation guard applies both the planet and draft-owner predicates when following associations from a draft, including generated draft-administration data. The agreed security design has no administrator role or cross-planet bypass.
-
-## MailHog
-
-With Docker Desktop running:
+MailHog captures welcome emails locally instead of delivering them to external recipients:
 
 ```powershell
 docker compose up -d mailhog
+npm run watch-spacefarer
 ```
 
-Open the [MailHog inbox](http://localhost:8025). SMTP listens on `127.0.0.1:1025`; both published ports are limited to the local machine. Messages stay in MailHog rather than being sent to external recipients. Its default storage is in memory, so restarting it clears the inbox.
+Open the [MailHog inbox](http://localhost:8025). SMTP listens on `127.0.0.1:1025`, and both published ports are restricted to the local machine.
 
-With MailHog running, execute `npm run test:mailhog` for the explicit SMTP integration check. It sends one welcome message to a unique test address and verifies its subject and body through MailHog's local HTTP API. The routine `npm test` suite excludes this check and never requires SMTP.
-
-The notification service defaults to this local MailHog instance. Copy `.env.example` to `.env` to change its SMTP host, port, sender, secure-transport flag, and connection, greeting, or socket timeouts. Configure both `SMTP_USER` and `SMTP_PASSWORD` when a future SMTP provider requires credentials; local MailHog requires neither. Local `.env` files are ignored by Git.
-
-CAP sends a welcome message after a new active Spacefarer is committed, including activation of a new draft. Delivery is best effort: SMTP failures are logged after commit and do not remove the created record or turn its successful API response into a failure. This version has no durable outbox or automatic retry, so process interruption or SMTP failure can lose a notification.
-
-Stop this project's MailHog container with:
+Stop and remove the MailHog container with:
 
 ```powershell
 docker compose down
 ```
 
-## API Demo
+Copy `.env.example` to `.env` to change the SMTP host, port, sender, security, credentials, or timeouts. Configure `SMTP_USER` and `SMTP_PASSWORD` together when the selected SMTP provider requires authentication.
 
-With Docker Desktop running, start MailHog and CAP in separate terminals:
+## Debug in VS Code
 
-```powershell
-docker compose up -d mailhog
+The workspace provides three **Run and Debug** configurations:
+
+| Configuration            | Behavior                                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **CAP: Debug**           | Type-checks and starts CAP with the Node.js debugger attached.                                                                    |
+| **CAP: Debug + MailHog** | Starts MailHog, starts CAP, and opens the Fiori application in a debug-enabled Chrome window. Stopping the session stops MailHog. |
+| **CAP: Debug tests**     | Type-checks and runs the Vitest suite with debugging enabled.                                                                     |
+
+Install the workspace recommendations when VS Code offers them. They include SAP CDS language support and the SAP Fiori tools extension pack.
+
+## Demo Users
+
+These credentials are public development fixtures. They are not production accounts.
+
+| Username          | Password               | Role             | Planet |
+| ----------------- | ---------------------- | ---------------- | ------ |
+| `earth-user`      | `earth-demo`           | `SpacefarerUser` | Earth  |
+| `earth-colleague` | `earth-colleague-demo` | `SpacefarerUser` | Earth  |
+| `mars-user`       | `mars-demo`            | `SpacefarerUser` | Mars   |
+
+Use a private browser session when switching users because browsers cache Basic authentication credentials.
+
+The project also contains two negative test identities:
+
+| Username          | Password          | Purpose                                   |
+| ----------------- | ----------------- | ----------------------------------------- |
+| `planetless-user` | `planetless-demo` | Has the role but no planet attribute.     |
+| `roleless-user`   | `roleless-demo`   | Has a planet but lacks the required role. |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Browser["Fiori elements<br/>List Report and Object Page"]
+    Service["OData V4 GalacticService<br/>draft and CRUD handling"]
+    Policy["CAP authorization and<br/>TypeScript lifecycle policies"]
+    Database["In-memory SQLite<br/>CDS model and CSV fixtures"]
+    Notification["Post-commit notification"]
+    Mail["SMTP / MailHog"]
+
+    Browser --> Service
+    Service --> Policy
+    Policy --> Database
+    Policy --> Notification
+    Notification --> Mail
 ```
 
-```powershell
-npm start
+The Fiori application is metadata-driven. CDS annotations define the List Report columns, filter fields, Object Page sections, value helps, labels, and read-only origin planet. The root UI5 resource bundle provides English text; another locale can be added later without changing the annotation keys.
+
+## Domain and Validation
+
+`Spacefarers` contains the assignment fields plus the exercise-specific values `originPlanet`, `spacesuitColor`, `stardustCollection`, and `wormholeNavigationSkill`. Departments and Positions are shared read-only catalogs. A position is valid only with its matching department.
+
+CAP owns ordinary input validation:
+
+- `@mandatory` rejects missing or blank names and email.
+- `@assert.range` requires non-negative stardust and a navigation skill between 0 and 100.
+- `@assert.target` verifies referenced departments and positions.
+- CDS defaults initialize stardust to `0` and navigation skill to `1` when omitted.
+
+TypeScript handles rules that depend on request identity or persisted related data. It derives `originPlanet` from the authenticated user, prevents reassignment, rejects explicit nulls for the defaulted numeric fields, and verifies department/position consistency across partial updates.
+
+Validation failures use structured OData errors with readable messages and affected-property targets. Fiori can associate those errors with the corresponding fields, including errors returned during draft activation.
+
+## Creation and Notification Lifecycle
+
+```mermaid
+flowchart TD
+    Request["CREATE or draft activation"]
+    Generic["CAP declarative validation"]
+    Before["before CREATE<br/>trusted planet and business policy"]
+    Insert["Generic database insert"]
+    After["after CREATE<br/>register succeeded callback"]
+    Commit["Transaction commit"]
+    Email["Send welcome email over SMTP"]
+
+    Request --> Generic --> Before --> Insert --> After --> Commit --> Email
 ```
 
-The following PowerShell setup creates Basic-auth headers for both demo planets:
+The welcome email is attempted only after the transaction succeeds. A delivery failure is logged and does not undo the committed Spacefarer or change the successful API response. Delivery is best effort; this version has no durable outbox or automatic retry.
 
-```powershell
-$api = "http://localhost:4004/odata/v4/galactic"
+Seed loading does not invoke the service create lifecycle, so starting the application does not send welcome messages for fixture records.
 
-function New-DemoHeaders([string]$credentials) {
-  $token = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($credentials))
-  @{ Authorization = "Basic $token"; Accept = "application/json" }
-}
+## Security Model
 
-$earth = New-DemoHeaders "earth-user:earth-demo"
-$mars = New-DemoHeaders "mars-user:mars-demo"
-```
+- CAP Basic authentication provides fixed identities in development and tests.
+- `SpacefarerUser` is required for every Galactic service request.
+- A CDS instance restriction limits active Spacefarer access to `originPlanet = $user.planet`.
+- Additional navigation protection preserves planet isolation through active and draft associations.
+- CAP draft ownership prevents users from accessing another user's draft, including users from the same planet.
+- Catalogs are readable by authorized users and reject writes.
+- The server derives the origin planet and rejects client attempts to select or change it.
 
-Read the first five records for each planet in descending stardust order, expand their assignments, and request each filtered count:
+The static application shell may load before authentication, but every application data request is protected. The production profile selects JWT authentication and deliberately has no mock-user fallback. Connecting a real identity provider is outside this local exercise.
 
-```powershell
-$earthQuery = '/Spacefarers?$filter=originPlanet%20eq%20%27Earth%27&$orderby=stardustCollection%20desc&$top=5&$skip=0&$count=true&$expand=department,position'
-$marsQuery = '/Spacefarers?$filter=originPlanet%20eq%20%27Mars%27&$orderby=stardustCollection%20desc&$top=5&$skip=0&$count=true&$expand=department,position'
+There is no administrator role, cross-planet bypass, or planet-reassignment API.
 
-Invoke-RestMethod -Uri ($api + $earthQuery) -Headers $earth
-Invoke-RestMethod -Uri ($api + $marsQuery) -Headers $mars
-```
+## Fiori Behavior
 
-Create, read, update, and delete an active Spacefarer. The API derives `originPlanet` from the Earth identity and MailHog captures a welcome email after the create commits.
+The List Report displays the required stardust and spacesuit fields along with identity, planet, navigation skill, department, and position. Fiori and OData provide filtering, sorting, count handling, and server-side paging.
 
-```powershell
-$body = @{
-  IsActiveEntity = $true
-  firstName = "API"
-  lastName = "Voyager"
-  email = "api.voyager@galactic.example"
-} | ConvertTo-Json
+Selecting a row opens the Object Page. Draft support enables create, edit, activate, and discard flows. Users can edit the spacefaring statistics requested by the assignment, while Origin Planet remains read-only and server-controlled.
 
-$created = Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body $body
-$activeKey = "Spacefarers(ID=$($created.ID),IsActiveEntity=true)"
+## Tests and Quality Checks
 
-Invoke-RestMethod -Uri "$api/$activeKey" -Headers $earth
-Invoke-RestMethod -Uri "$api/$activeKey" -Method Patch -Headers $earth -ContentType "application/json" -Body '{"spacesuitColor":"Cerulean"}'
-Invoke-RestMethod -Uri "$api/$activeKey" -Method Delete -Headers $earth
-```
-
-Create and activate a draft, then open a later edit and discard it:
-
-```powershell
-$draftBody = @{
-  firstName = "Draft"
-  lastName = "Voyager"
-  email = "draft.voyager@galactic.example"
-} | ConvertTo-Json
-
-$draft = Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body $draftBody
-$draftKey = "Spacefarers(ID=$($draft.ID),IsActiveEntity=false)"
-$activeKey = "Spacefarers(ID=$($draft.ID),IsActiveEntity=true)"
-
-Invoke-RestMethod -Uri "$api/$draftKey/draftActivate" -Method Post -Headers $earth -ContentType "application/json" -Body '{}'
-Invoke-RestMethod -Uri "$api/$activeKey/draftEdit" -Method Post -Headers $earth -ContentType "application/json" -Body '{"PreserveChanges":false}'
-Invoke-RestMethod -Uri "$api/$draftKey" -Method Patch -Headers $earth -ContentType "application/json" -Body '{"spacesuitColor":"Gold"}'
-Invoke-RestMethod -Uri "$api/$draftKey" -Method Delete -Headers $earth
-Invoke-RestMethod -Uri "$api/$activeKey" -Method Delete -Headers $earth
-```
-
-Invalid input returns an OData error object containing `error.code`, `error.message`, and, when applicable, `error.target`. For example, this request returns HTTP 400 with **Stardust collection cannot be negative.** as its message and `stardustCollection` as its target:
-
-```powershell
-try {
-  Invoke-RestMethod -Uri "$api/Spacefarers" -Method Post -Headers $earth -ContentType "application/json" -Body '{"IsActiveEntity":true,"firstName":"Invalid","lastName":"Candidate","email":"invalid@galactic.example","stardustCollection":-1}'
-} catch {
-  $_.ErrorDetails.Message
-}
-```
-
-## Checks
+Run the complete project checks with:
 
 ```powershell
 npm run typecheck
@@ -203,46 +174,43 @@ npm run format:check
 docker compose config --quiet
 ```
 
-The tests start a real CAP server on an automatically selected port. Bootstrap coverage verifies the landing page, SQLite connectivity, and authorized OData metadata access. Authorization coverage distinguishes anonymous, unknown-user, and missing-role failures. Planet-isolation coverage verifies collections, counts, direct records, mutations, drafts, active and draft navigations, generated draft metadata, shared catalogs, missing attributes, and OData batches. Domain-model coverage verifies table deployment, required fields, defaults, ranges, association contracts, and real association expansion. Seed-data coverage verifies catalog relationships, numeric boundaries, assignment consistency, planet variety, and pagination volume. Service coverage verifies exposed data, read-only catalogs, active CRUD, and the complete draft lifecycle. Lifecycle coverage verifies trusted planets, defaults, active validation, partial-update integrity, and draft activation boundaries. Fiori error coverage verifies exact user-facing messages, OData codes, property targets, severity, draft activation, and correction after a rejected save. Notification coverage verifies message construction, SMTP transport configuration, post-commit delivery, suppression for other lifecycle events, and preservation of committed data when delivery fails. Automated tests inject a notification test double and do not need Docker or MailHog.
+The routine Vitest suite starts real CAP test servers with isolated in-memory SQLite databases. It covers the domain model, OData CRUD and drafts, authorization, cross-planet isolation, navigation and batch requests, Fiori metadata, validation errors, and notification behavior. SMTP is replaced with a test double during routine tests.
 
-Formatting covers supported source, configuration, and documentation files. Plain Prettier does not format CDS files.
+With MailHog running, execute the opt-in SMTP integration test:
 
-## Files to Explore
+```powershell
+npm run test:mailhog
+```
 
-| File or directory                     | Purpose                                                                            |
-| ------------------------------------- | ---------------------------------------------------------------------------------- |
-| `package.json`                        | Runtime and development dependencies, commands, and CAP configuration profiles.    |
-| `package-lock.json`                   | Resolved dependency versions for reproducible installs with `npm ci`.              |
-| `srv/galactic-service.cds`            | The protected OData service with draft-enabled Spacefarers and read-only catalogs. |
-| `srv/galactic-constraints.cds`        | Declarative required-field and numeric-range validation with readable messages.    |
-| `srv/galactic-service.ts`             | Small service entry point that registers the Spacefarer lifecycle handlers.        |
-| `srv/lifecycle/`                      | Trusted-planet, active-record, assignment, and shared-type modules.                |
-| `srv/services/`                       | Configurable SMTP notification boundary and welcome-message construction.          |
-| `db/schema.cds`                       | The persistence model for Spacefarers and the shared catalogs.                     |
-| `db/data/`                            | Deterministic CSV fixtures loaded into the local database at startup.              |
-| `test/bootstrap.test.ts`              | TypeScript tests using `cds.test` and Vitest.                                      |
-| `test/authorization.test.ts`          | Anonymous, invalid-credential, and missing-role access tests.                      |
-| `test/domain-model.test.ts`           | Model compilation and SQLite persistence tests.                                    |
-| `test/seed-data.test.ts`              | Seed loading, relationship consistency, and demo-volume tests.                     |
-| `test/service.test.ts`                | OData projections, catalog protection, active CRUD, and draft lifecycle tests.     |
-| `test/planet-isolation.test.ts`       | Planet-scoped reads, writes, drafts, navigation, counts, and batch tests.          |
-| `test/lifecycle.test.ts`              | Focused creation, update, assignment, default, and draft integrity tests.          |
-| `test/notification-service.test.ts`   | Welcome-message and SMTP configuration tests without external delivery.            |
-| `test/notification-lifecycle.test.ts` | Post-commit notification and lifecycle suppression tests.                          |
-| `test/fiori-create-flow.test.ts`      | Draft-enabled and insertable metadata contracts used by the Fiori Create action.   |
-| `test/fiori-user-experience.test.ts`  | Human-readable entity/property labels and email semantic behavior.                 |
-| `test/fiori-error-handling.test.ts`   | Structured messages, field targets, and rejected-draft recovery for Fiori.         |
-| `test/mailhog.integration.test.ts`    | Explicit real-SMTP capture check, excluded from the routine test suite.            |
-| `vitest.config.mts`                   | Vitest setup and serial test-file execution for the shared CAP test server.        |
-| `vitest.mailhog.config.mts`           | Isolated Vitest configuration for the opt-in MailHog integration check.            |
-| `tsconfig.json`                       | Strict TypeScript settings, CAP type resolution, and source maps.                  |
-| `app/spacefarer/`                     | TypeScript SAP Fiori elements application served through CAP.                      |
-| `.vscode/launch.json`                 | Debug configurations for the server and tests.                                     |
-| `.vscode/tasks.json`                  | Type-checking and MailHog lifecycle tasks for debugging.                           |
-| `compose.yaml`                        | Local MailHog container.                                                           |
+CodeScene safeguards are used on changed TypeScript files to prevent maintainability regressions.
 
-## Design and Future Work
+## Project Guide
 
-See the [assignment](doc/galactic_spacefarer_assignment.md), [backend design](doc/backend-design.md), and [implementation progress](doc/implementation-progress.md).
+| Path                           | Purpose                                                               |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `db/schema.cds`                | Persistence model, defaults, ranges, and associations.                |
+| `db/data/`                     | Deterministic development fixtures.                                   |
+| `srv/galactic-service.cds`     | Protected draft-enabled OData service.                                |
+| `srv/galactic-constraints.cds` | Service-level required fields and validation messages.                |
+| `srv/galactic-service.ts`      | Lifecycle-handler registration.                                       |
+| `srv/lifecycle/`               | Planet, assignment, validation, isolation, and notification policies. |
+| `srv/services/`                | SMTP transport and welcome-message construction.                      |
+| `app/spacefarer/`              | TypeScript Fiori elements application and annotations.                |
+| `test/`                        | Backend, metadata, authorization, lifecycle, and notification tests.  |
+| `compose.yaml`                 | Local MailHog service.                                                |
+| `doc/`                         | Assignment, design decisions, and implementation history.             |
 
-Future galactic administration could support government reports across planets and controlled planet reassignment. Those features need a separate authorization design and are outside this homework implementation. Real identity-provider integration and durable email retries are also future work.
+## Design Decisions and Future Work
+
+The exercise leaves several business details open. This implementation makes the following choices:
+
+- Departments and Positions are shared reference data, while Spacefarers are planet-scoped.
+- Assignment is optional, but a selected position requires its matching department.
+- Users on the same planet share active records; drafts remain private to their creator.
+- The backend always owns the origin planet.
+- Email is sent after commit and never controls transaction success.
+- SQLite and the demo identities are limited to local development and testing.
+
+Future galactic administration could add government-level reports across planets and controlled planet reassignment. Those features require a separately designed authorization model.
+
+Other production-oriented improvements include a real JWT identity provider, durable notification delivery, secrets management, health checks, and a production SMTP provider. A future deployment phase could package the precompiled CAP service and optimized Fiori application in Docker and optionally connect CAP to PostgreSQL through `@cap-js/postgres`, while retaining SQLite for development and tests.

@@ -458,3 +458,22 @@ Verification:
 - `npm test`: 163 tests passed across 14 files, including 7 focused Fiori error-contract cases and the declarative service-constraint contract.
 - Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, Compose validation, and `git diff --check` passed.
 - CodeScene scores both refactored validation modules and both directly affected test files at 10.0; the pre-commit safeguard passed with no issues across all six eligible files in the nine-file Phase 17 change set.
+
+## Phase 18 — README
+
+Status: implemented; stopped for the user's Phase 18 review.
+
+Reworked the accumulated development documentation into a finished interview submission:
+
+- The README now opens with a requirement-to-implementation map and the shortest supported Fiori startup path using project-local npm scripts.
+- MailHog startup, VS Code debugging, demo identities, architecture, validation responsibilities, creation lifecycle, security boundaries, Fiori behavior, checks, design decisions, and future work are grouped into reviewer-focused sections.
+- Removed phase status and repository-working instructions from the final README.
+- Kept the final README focused on the Fiori demonstration instead of maintaining a second command-line API walkthrough.
+- Updated the Phase 18 plan and final demo startup instructions to use `npm run watch-spacefarer`; a global CDS CLI is no longer implied.
+- Recorded production container packaging and optional PostgreSQL support as future improvements without adding deployment infrastructure or dependencies.
+
+Verification:
+
+- `npm test`: 163 tests passed across 14 files.
+- Backend and frontend type checking, frontend ESLint, UI5 production build, full-project CDS-to-EDMX compilation, formatting, Compose validation, and `git diff --check` passed.
+- The CodeScene pre-commit safeguard found no eligible source-code changes in this documentation-only phase.
